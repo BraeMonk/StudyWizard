@@ -2,109 +2,136 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Study Wizard - RPG Idle</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Wizard's Tower Study</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div id="app">
-    <header class="header">
-      <div class="header-content">
-        <div class="title-area">
-          <h1>⚔ Study Wizard ⚔</h1>
-          <p>A Lofi Medieval Fantasy RPG Idle</p>
+    <canvas id="towerCanvas"></canvas>
+    
+    <div class="overlay-ui">
+      <header class="app-header">
+        <div class="tower-title">
+          <h1>🔮 Wizard's Tower</h1>
+          <p class="subtitle">Your Cozy Study Sanctuary</p>
         </div>
-        <div class="stats-row">
-          <div class="stat-box">
-            <div class="stat-label">Ink</div>
-            <div class="stat-value" id="inkDisplay">0</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-label">Wisdom</div>
-            <div class="stat-value" id="wisdomDisplay">0</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-label">Ink/sec</div>
-            <div class="stat-value" id="rateDisplay">0.2</div>
-          </div>
-        </div>
-      </div>
-    </header>
+        <div class="time-display" id="realTime">12:00 PM</div>
+      </header>
 
-    <main class="main-container">
-      <div class="character-section">
-        <div class="scene-card">
-          <canvas id="mainCanvas"></canvas>
-          <p class="scene-caption">Click to channel magical energy and summon Ink from the void.</p>
-        </div>
-
-        <div class="characters-card">
-          <h2>⚔ Recruit Companions ⚔</h2>
-          <div class="character-grid" id="characterGrid"></div>
-        </div>
-
-        <div class="study-boon-card">
-          <h2>✨ Study Boon</h2>
-          <p>Focus for 25 minutes to receive a <strong>+50% Ink</strong> blessing.</p>
-          <button class="study-btn" id="studyBtn">Begin Study Session</button>
-          <div class="timer-bar">
-            <div class="timer-fill" id="timerFill" style="width: 0%"></div>
-          </div>
-        </div>
-      </div>
-
-      <aside class="sidebar">
-        <div class="tabs">
-          <button class="tab-btn active" data-tab="upgrades">Upgrades</button>
-          <button class="tab-btn" data-tab="clicking">Clicking</button>
-          <button class="tab-btn" data-tab="archive">Archive</button>
-          <button class="tab-btn" data-tab="about">About</button>
-        </div>
-
-        <div class="panel-card">
-          <div class="tab-panel active" id="upgrades">
-            <h2>Library Upgrades</h2>
-            <p class="panel-desc">Enhance your castle library to generate more Ink passively.</p>
-            <div class="upgrade-list" id="passiveUpgrades"></div>
-          </div>
-
-          <div class="tab-panel" id="clicking">
-            <h2>Click Power</h2>
-            <p class="panel-desc">Upgrade your magical implements to earn more Ink per click.</p>
-            <div class="upgrade-list" id="clickUpgrades"></div>
-          </div>
-
-          <div class="tab-panel" id="archive">
-            <h2>Restore the Archive</h2>
-            <p class="panel-desc">Transform accumulated Ink into eternal Wisdom Pages.</p>
-            <div class="prestige-info">
-              <div class="prestige-label">Wisdom Gained on Prestige:</div>
-              <div class="prestige-value" id="prestigeValue">0</div>
-              <div class="prestige-bonus" id="prestigeBonus">Wisdom grants permanent bonuses</div>
+      <main class="main-content">
+        <div class="stats-panel">
+          <div class="stat-card">
+            <span class="stat-icon">📚</span>
+            <div>
+              <div class="stat-label">Study Sessions</div>
+              <div class="stat-value" id="totalSessions">0</div>
             </div>
-            <button class="prestige-btn" id="prestigeBtn">Restore Archive</button>
-            <p class="prestige-note">Resets Ink and upgrades. Wisdom and companions remain.</p>
           </div>
-
-          <div class="tab-panel" id="about">
-            <h2>About Study Wizard</h2>
-            <p class="panel-desc">A cozy lofi medieval fantasy idle RPG where studying becomes an adventure.</p>
-            <ul class="about-list">
-              <li>Click to channel magical energy and earn Ink</li>
-              <li>Recruit mystical companions to generate passive Ink</li>
-              <li>Upgrade your library and magical tools</li>
-              <li>Activate Study Boon when focusing for real studies</li>
-              <li>Prestige to gain eternal Wisdom bonuses</li>
-            </ul>
+          <div class="stat-card">
+            <span class="stat-icon">⏱️</span>
+            <div>
+              <div class="stat-label">Focus Time Today</div>
+              <div class="stat-value" id="todayTime">0h 0m</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">🌟</span>
+            <div>
+              <div class="stat-label">Study Streak</div>
+              <div class="stat-value" id="streak">0 days</div>
+            </div>
           </div>
         </div>
-      </aside>
-    </main>
 
-    <footer class="footer">
-      Study Wizard · A Lofi Medieval Fantasy RPG Idle · Progress auto-saves
-    </footer>
+        <div class="timer-section">
+          <div class="timer-display" id="timerDisplay">25:00</div>
+          <div class="timer-label" id="timerLabel">Ready to Study</div>
+          
+          <div class="timer-controls">
+            <button class="btn-primary" id="startBtn">
+              <span class="btn-icon">▶</span>
+              Start Session
+            </button>
+            <button class="btn-secondary" id="pauseBtn" style="display:none;">
+              <span class="btn-icon">⏸</span>
+              Pause
+            </button>
+            <button class="btn-secondary" id="resetBtn">
+              <span class="btn-icon">↻</span>
+              Reset
+            </button>
+          </div>
+
+          <div class="timer-presets">
+            <button class="preset-btn active" data-minutes="25">25 min</button>
+            <button class="preset-btn" data-minutes="50">50 min</button>
+            <button class="preset-btn" data-minutes="15">15 min</button>
+          </div>
+        </div>
+
+        <div class="motivation-card" id="motivationCard">
+          <p class="motivation-text" id="motivationText">
+            The wizard awaits your dedication...
+          </p>
+        </div>
+
+        <div class="settings-panel">
+          <h3>Tower Ambiance</h3>
+          <div class="setting-row">
+            <label>Time of Day</label>
+            <div class="button-group">
+              <button class="setting-btn active" data-time="evening">🌙 Evening</button>
+              <button class="setting-btn" data-time="night">🌃 Night</button>
+              <button class="setting-btn" data-time="dawn">🌅 Dawn</button>
+            </div>
+          </div>
+          
+          <div class="setting-row">
+            <label>Candles <span id="candleCount">3</span></label>
+            <input type="range" id="candleSlider" min="1" max="5" value="3" />
+          </div>
+
+          <div class="setting-row">
+            <label>
+              <input type="checkbox" id="soundToggle" checked />
+              Ambient Sounds
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <label>
+              <input type="checkbox" id="particlesToggle" checked />
+              Magic Particles
+            </label>
+          </div>
+        </div>
+      </main>
+
+      <footer class="app-footer">
+        <span>✨ Your progress is saved locally</span>
+        <button class="footer-btn" id="aboutBtn">About</button>
+      </footer>
+    </div>
+
+    <div class="modal" id="aboutModal">
+      <div class="modal-content">
+        <button class="modal-close" id="closeModal">×</button>
+        <h2>🧙‍♂️ About Wizard's Tower Study</h2>
+        <p>A cozy, aesthetic study companion to help you focus in a magical tower sanctuary.</p>
+        <h3>Features</h3>
+        <ul>
+          <li>🕰️ Pomodoro-style study sessions (25/50/15 minutes)</li>
+          <li>🎨 Animated canvas tower scene with candles & magic</li>
+          <li>📊 Track your study sessions and streaks</li>
+          <li>🌙 Change time of day for different moods</li>
+          <li>🔮 Motivational wizard wisdom</li>
+          <li>💾 All progress saved locally (works offline!)</li>
+        </ul>
+        <p class="tip">💡 Tip: Add this to your home screen to use as a PWA!</p>
+      </div>
+    </div>
   </div>
 
   <script src="script.js"></script>
