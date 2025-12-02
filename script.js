@@ -1,643 +1,654 @@
-// Game State
-const STATE_KEY = "StudyWizardRPG_v1";
+// Wizard's Tower Study - Canvas + Timer PWA
+const STATE_KEY = "WizardTowerStudy_v1";
 
+// State
 const state = {
-  ink: 0,
-  wisdom: 0,
-  clickPower: 1,
-  studyBoonActive: false,
-  studyBoonTime: 0,
-  passiveUpgrades: {},
-  clickUpgrades: {},
-  characters: {}
+  totalSessions: 0,
+  todayMinutes: 0,
+  lastStudyDate: null,
+  streak: 0,
+  timeOfDay: 'evening',
+  candleCount: 3,
+  soundEnabled: true,
+  particlesEnabled: true
 };
 
-// Character configs - they level up visually!
-const characterConfigs = [
-  {
-    id: 'apprentice',
-    name: 'Apprentice Scholar',
-    baseCost: 50,
-    baseRate: 0.5,
-    desc: 'A young mage learning the ways'
-  },
-  {
-    id: 'scholar',
-    name: 'Castle Scholar',
-    baseCost: 300,
-    baseRate: 2.5,
-    desc: 'Dedicated to ancient texts'
-  },
-  {
-    id: 'mage',
-    name: 'Tower Mage',
-    baseCost: 1500,
-    baseRate: 12,
-    desc: 'Channels arcane energies'
-  },
-  {
-    id: 'archmage',
-    name: 'Archmage',
-    baseCost: 8000,
-    baseRate: 60,
-    desc: 'Master of mystical arts'
-  },
-  {
-    id: 'timeLord',
-    name: 'Time Lord',
-    baseCost: 40000,
-    baseRate: 300,
-    desc: 'Bends time itself to study'
-  }
-];
+// Timer state
+let timerMinutes = 25;
+let timerSeconds = 0;
+let timerRunning = false;
+let timerInterval = null;
 
-const passiveUpgradeConfigs = [
-  { id: 'candlelight', name: 'Candlelight', baseCost: 15, rate: 0.2, desc: 'Cozy illumination' },
-  { id: 'scrolls', name: 'Ancient Scrolls', baseCost: 60, rate: 0.5, desc: 'Whispers of knowledge' },
-  { id: 'desk', name: 'Reading Desk', baseCost: 180, rate: 1.2, desc: 'Study sanctuary' },
-  { id: 'gallery', name: 'Upper Gallery', baseCost: 480, rate: 2.8, desc: 'More library space' },
-  { id: 'window', name: 'Astral Window', baseCost: 1300, rate: 6.5, desc: 'Starlight flows in' },
-  { id: 'quill_passive', name: 'Enchanted Quill', baseCost: 3500, rate: 15, desc: 'Writes on its own' },
-  { id: 'spell', name: 'Time Spell', baseCost: 9000, rate: 35, desc: 'Dilates time' },
-  { id: 'tome', name: 'Ancient Tome', baseCost: 25000, rate: 80, desc: 'Self-writing grimoire' }
-];
-
-const clickUpgradeConfigs = [
-  { id: 'quill', name: 'Basic Quill', baseCost: 10, power: 1, desc: 'Better writing tool' },
-  { id: 'silver', name: 'Silver Ink', baseCost: 100, power: 3, desc: 'Magical fluid' },
-  { id: 'pen', name: 'Magic Pen', baseCost: 800, power: 8, desc: 'Enchanted implement' },
-  { id: 'staff', name: 'Wizard Staff', baseCost: 5000, power: 20, desc: 'Pure magical power' }
-];
-
-// Canvas setup
-const canvas = document.getElementById('mainCanvas');
-const ctx = canvas.getContext('2d');
+// Canvas elements
+let canvas, ctx;
+let canvasWidth, canvasHeight;
 let particles = [];
-let lastTick = performance.now();
+let candleFlames = [];
 
-function resizeCanvas() {
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width;
-  canvas.height = rect.height;
-}
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
+// DOM elements
+const timerDisplay = document.getElementById('timerDisplay');
+const timerLabel = document.getElementById('timerLabel');
+const startBtn = document.getElementById('startBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const resetBtn = document.getElementById('resetBtn');
+const totalSessionsEl = document.getElementById('totalSessions');
+const todayTimeEl = document.getElementById('todayTime');
+const streakEl = document.getElementById('streak');
+const motivationText = document.getElementById('motivationText');
+const realTimeEl = document.getElementById('realTime');
+const candleSlider = document.getElementById('candleSlider');
+const candleCountEl = document.getElementById('candleCount');
+const soundToggle = document.getElementById('soundToggle');
+const particlesToggle = document.getElementById('particlesToggle');
+const aboutBtn = document.getElementById('aboutBtn');
+const closeModal = document.getElementById('closeModal');
+const aboutModal = document.getElementById('aboutModal');
 
-// Particle class
-class Particle {
-  constructor(x, y, text) {
-    this.x = x;
-    this.y = y;
-    this.text = text;
-    this.vy = -2;
-    this.opacity = 1;
-    this.life = 60;
-  }
+// Motivational quotes
+const quotes = [
+  "The wizard studies with patience and dedication...",
+  "Knowledge flows like ink across ancient parchment...",
+  "Each moment of focus strengthens your magical prowess...",
+  "The tower's wisdom grows with your effort...",
+  "Ancient texts reveal secrets to the persistent...",
+  "Your dedication illuminates the darkest mysteries...",
+  "The stars align for those who seek knowledge...",
+  "Magic thrives in the quiet hours of study...",
+  "Concentration is the first spell to master...",
+  "The tower remembers your diligence...",
+  "Even the greatest wizards started with single pages...",
+  "Your focus today shapes your mastery tomorrow..."
+];
 
-  update() {
-    this.y += this.vy;
-    this.opacity -= 0.016;
-    this.life--;
-    return this.life > 0;
-  }
-
-  draw(ctx) {
-    ctx.save();
-    ctx.globalAlpha = this.opacity;
-    ctx.fillStyle = '#f4d794';
-    ctx.font = 'bold 24px Georgia';
-    ctx.textAlign = 'center';
-    ctx.fillText(this.text, this.x, this.y);
-    ctx.restore();
-  }
-}
-
-// Draw character on canvas with level progression
-function drawCharacter(count) {
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
-
-  // Character evolves as you hire more
-  let color = '#6b4423';
-  let size = 60;
-  let glow = 0;
-
-  if (count > 50) {
-    color = '#f4d794';
-    size = 100;
-    glow = 30;
-  } else if (count > 20) {
-    color = '#c4a574';
-    size = 85;
-    glow = 20;
-  } else if (count > 5) {
-    color = '#8b6433';
-    size = 70;
-    glow = 10;
-  }
-
-  // Glow effect
-  if (glow > 0) {
-    ctx.save();
-    ctx.shadowColor = color;
-    ctx.shadowBlur = glow;
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, size + 20, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  // Main character
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, size, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Hat
-  ctx.fillStyle = '#3a1a4a';
-  ctx.beginPath();
-  ctx.moveTo(centerX, centerY - size);
-  ctx.lineTo(centerX - size * 0.6, centerY - size * 0.3);
-  ctx.lineTo(centerX + size * 0.6, centerY - size * 0.3);
-  ctx.closePath();
-  ctx.fill();
-
-  // Eyes
-  ctx.fillStyle = '#f4e8d8';
-  ctx.beginPath();
-  ctx.arc(centerX - size * 0.3, centerY - size * 0.1, size * 0.15, 0, Math.PI * 2);
-  ctx.arc(centerX + size * 0.3, centerY - size * 0.1, size * 0.15, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Pupils
-  ctx.fillStyle = '#1a0f0a';
-  ctx.beginPath();
-  ctx.arc(centerX - size * 0.3, centerY - size * 0.1, size * 0.08, 0, Math.PI * 2);
-  ctx.arc(centerX + size * 0.3, centerY - size * 0.1, size * 0.08, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-// Animation loop
-function animate() {
-  ctx.fillStyle = '#1a0f0a';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // Floating sparkles
-  const time = Date.now() * 0.001;
-  for (let i = 0; i < 8; i++) {
-    const x = (Math.sin(time * 0.5 + i * 1.2) * 0.4 + 0.5) * canvas.width;
-    const y = (Math.cos(time * 0.7 + i * 1.5) * 0.4 + 0.5) * canvas.height;
-    const size = Math.sin(time * 2 + i) * 2 + 3;
-
-    ctx.save();
-    ctx.globalAlpha = 0.4;
-    ctx.fillStyle = '#f4d794';
-    ctx.beginPath();
-    ctx.arc(x, y, size, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  // Draw main character
-  const totalCharacters = Object.values(state.characters).reduce((a, b) => a + b, 0);
-  drawCharacter(totalCharacters);
-
-  // Particles
-  particles = particles.filter(p => {
-    const alive = p.update();
-    if (alive) p.draw(ctx);
-    return alive;
-  });
-
-  requestAnimationFrame(animate);
-}
-animate();
-
-// Click handler
-canvas.addEventListener('click', (e) => {
-  const power = calculateClickPower();
-  state.ink += power;
-
-  const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-  particles.push(new Particle(x, y, `+${power.toFixed(1)}`));
-
+// Initialize
+function init() {
+  loadState();
+  setupCanvas();
+  setupEventListeners();
   updateDisplay();
-  saveState();
-});
-
-// Calculate rates
-function calculateClickPower() {
-  let power = 1;
-  clickUpgradeConfigs.forEach(cfg => {
-    const level = state.clickUpgrades[cfg.id] || 0;
-    power += cfg.power * level;
-  });
-  power *= (1 + state.wisdom * 0.02);
-  return power;
+  updateRealTime();
+  setInterval(updateRealTime, 1000);
+  animate();
+  showRandomQuote();
 }
 
-function calculateInkRate() {
-  let rate = 0.2;
-
-  // Passive upgrades
-  passiveUpgradeConfigs.forEach(cfg => {
-    const level = state.passiveUpgrades[cfg.id] || 0;
-    rate += cfg.rate * level;
-  });
-
-  // Characters
-  characterConfigs.forEach(cfg => {
-    const count = state.characters[cfg.id] || 0;
-    rate += cfg.baseRate * count;
-  });
-
-  // Bonuses
-  if (state.studyBoonActive) rate *= 1.5;
-  rate *= (1 + state.wisdom * 0.05);
-
-  return rate;
-}
-
-function getCost(baseCost, level) {
-  return Math.floor(baseCost * Math.pow(1.15, level));
-}
-
-// Character SVG generator with unique designs for each character type
-function getCharacterSVG(charId, count) {
-  const lvl = count > 10 ? 2 : count > 3 ? 1 : 0;
-
-  const designs = {
-    apprentice: {
-      colors: {
-        base: ['#8b6433', '#a48964', '#c4a574'],
-        robe: ['#4a3425', '#5a4435', '#6a5445'],
-        hat: ['#6b4423', '#7b5433', '#8b6443']
-      },
-      svg: (c) => `
-        <circle cx="50" cy="55" r="38" fill="${c.base}"/>
-        <rect x="30" y="50" width="40" height="50" fill="${c.robe}" rx="5"/>
-        <polygon points="50,15 25,45 75,45" fill="${c.hat}"/>
-        <circle cx="38" cy="48" r="6" fill="#f4e8d8"/>
-        <circle cx="62" cy="48" r="6" fill="#f4e8d8"/>
-        <circle cx="38" cy="48" r="3" fill="#1a0f0a"/>
-        <circle cx="62" cy="48" r="3" fill="#1a0f0a"/>
-        <rect x="42" y="65" width="16" height="4" fill="${c.robe}" rx="2"/>
-        <line x1="35" y1="70" x2="35" y2="85" stroke="${c.robe}" stroke-width="3"/>
-        <line x1="65" y1="70" x2="65" y2="85" stroke="${c.robe}" stroke-width="3"/>
-      `
-    },
-    scholar: {
-      colors: {
-        base: ['#6b5a4a', '#8b7a6a', '#ab9a8a'],
-        robe: ['#2a4a3a', '#3a5a4a', '#4a6a5a'],
-        book: ['#8b4513', '#a0522d', '#bc6c3d']
-      },
-      svg: (c) => `
-        <circle cx="50" cy="55" r="38" fill="${c.base}"/>
-        <rect x="28" y="48" width="44" height="52" fill="${c.robe}" rx="6"/>
-        <circle cx="50" cy="25" r="18" fill="${c.base}"/>
-        <rect x="32" y="20" width="36" height="12" fill="${c.robe}"/>
-        <circle cx="40" cy="50" r="6" fill="#f4e8d8"/>
-        <circle cx="60" cy="50" r="6" fill="#f4e8d8"/>
-        <circle cx="40" cy="50" r="3" fill="#1a0f0a"/>
-        <circle cx="60" cy="50" r="3" fill="#1a0f0a"/>
-        <rect x="35" y="70" width="12" height="18" fill="${c.book}" rx="2"/>
-        <line x1="35" y1="75" x2="47" y2="75" stroke="#f4e8d8" stroke-width="1"/>
-        <line x1="35" y1="80" x2="47" y2="80" stroke="#f4e8d8" stroke-width="1"/>
-        <line x1="35" y1="85" x2="47" y2="85" stroke="#f4e8d8" stroke-width="1"/>
-        <circle cx="50" cy="60" r="3" fill="${c.robe}"/>
-      `
-    },
-    mage: {
-      colors: {
-        base: ['#7a5a8a', '#9a7aaa', '#ba9aca'],
-        robe: ['#3a1a4a', '#4a2a5a', '#5a3a6a'],
-        orb: ['#6a4a7a', '#8a6a9a', '#aa8aba']
-      },
-      svg: (c) => `
-        <circle cx="50" cy="55" r="38" fill="${c.base}"/>
-        <rect x="25" y="45" width="50" height="55" fill="${c.robe}" rx="8"/>
-        <polygon points="50,8 20,38 80,38" fill="${c.robe}"/>
-        <circle cx="50" cy="15" r="8" fill="${c.orb}"/>
-        <circle cx="37" cy="47" r="7" fill="#f4e8d8"/>
-        <circle cx="63" cy="47" r="7" fill="#f4e8d8"/>
-        <circle cx="37" cy="47" r="3.5" fill="#1a0f0a"/>
-        <circle cx="63" cy="47" r="3.5" fill="#1a0f0a"/>
-        <rect x="20" y="65" width="15" height="30" fill="${c.robe}" rx="3"/>
-        <circle cx="27" cy="93" r="5" fill="${c.orb}"/>
-        <path d="M 45 63 Q 50 68 55 63" stroke="#1a0f0a" stroke-width="2" fill="none"/>
-        <circle cx="30" cy="55" r="2" fill="${c.orb}"/>
-        <circle cx="70" cy="55" r="2" fill="${c.orb}"/>
-      `
-    },
-    archmage: {
-      colors: {
-        base: ['#d4a574', '#e4b584', '#f4c594'],
-        robe: ['#4a1a5a', '#5a2a6a', '#6a3a7a'],
-        crystal: ['#8a4a9a', '#aa6aba', '#ca8ada']
-      },
-      svg: (c) => `
-        <circle cx="50" cy="55" r="40" fill="${c.base}"/>
-        <rect x="22" y="43" width="56" height="57" fill="${c.robe}" rx="10"/>
-        <polygon points="50,5 15,35 85,35" fill="${c.robe}"/>
-        <circle cx="50" cy="12" r="10" fill="${c.crystal}"/>
-        <circle cx="36" cy="46" r="8" fill="#f4e8d8"/>
-        <circle cx="64" cy="46" r="8" fill="#f4e8d8"/>
-        <circle cx="36" cy="46" r="4" fill="#6a3a7a"/>
-        <circle cx="64" cy="46" r="4" fill="#6a3a7a"/>
-        <rect x="15" y="60" width="20" height="35" fill="${c.robe}" rx="4"/>
-        <polygon points="25,95 20,88 30,88" fill="${c.crystal}"/>
-        <circle cx="50" cy="65" r="4" fill="${c.crystal}"/>
-        <circle cx="42" cy="72" r="3" fill="${c.crystal}"/>
-        <circle cx="58" cy="72" r="3" fill="${c.crystal}"/>
-        <rect x="45" y="78" width="10" height="3" fill="${c.crystal}" rx="1"/>
-        <path d="M 42 60 Q 50 65 58 60" stroke="#6a3a7a" stroke-width="2" fill="none"/>
-      `
-    },
-    timeLord: {
-      colors: {
-        base: ['#4a6a8a', '#5a7a9a', '#6a8aaa'],
-        robe: ['#1a2a3a', '#2a3a4a', '#3a4a5a'],
-        time: ['#6a8a9a', '#7a9aaa', '#8aaaba']
-      },
-      svg: (c) => `
-        <circle cx="50" cy="55" r="42" fill="${c.base}"/>
-        <rect x="20" y="40" width="60" height="60" fill="${c.robe}" rx="12"/>
-        <polygon points="50,2 10,32 90,32" fill="${c.robe}"/>
-        <circle cx="50" cy="10" r="12" fill="${c.time}"/>
-        <line x1="50" y1="10" x2="50" y2="5" stroke="${c.robe}" stroke-width="2"/>
-        <line x1="50" y1="10" x2="55" y2="10" stroke="${c.robe}" stroke-width="2"/>
-        <circle cx="35" cy="45" r="9" fill="#f4e8d8"/>
-        <circle cx="65" cy="45" r="9" fill="#f4e8d8"/>
-        <circle cx="35" cy="45" r="5" fill="#1a2a3a"/>
-        <circle cx="65" cy="45" r="5" fill="#1a2a3a"/>
-        <rect x="12" y="58" width="25" height="38" fill="${c.robe}" rx="5"/>
-        <circle cx="24" cy="95" r="7" fill="${c.time}"/>
-        <line x1="24" y1="95" x2="24" y2="90" stroke="${c.robe}" stroke-width="1.5"/>
-        <line x1="24" y1="95" x2="27" y2="95" stroke="${c.robe}" stroke-width="1.5"/>
-        <circle cx="50" cy="65" r="8" fill="${c.time}"/>
-        <circle cx="38" cy="75" r="4" fill="${c.time}"/>
-        <circle cx="62" cy="75" r="4" fill="${c.time}"/>
-        <circle cx="50" cy="82" r="5" fill="${c.time}"/>
-        <path d="M 40 58 Q 50 63 60 58" stroke="#1a2a3a" stroke-width="3" fill="none"/>
-        <circle cx="25" cy="48" r="2" fill="${c.time}"/>
-        <circle cx="75" cy="48" r="2" fill="${c.time}"/>
-        <circle cx="20" cy="60" r="2" fill="${c.time}"/>
-        <circle cx="80" cy="60" r="2" fill="${c.time}"/>
-      `
-    }
-  };
-
-  const design = designs[charId];
-  if (!design) return '';
-
-  const colors = {
-    base: design.colors.base[lvl],
-    robe: design.colors.robe[lvl],
-    hat: design.colors.hat ? design.colors.hat[lvl] : design.colors.robe[lvl],
-    book: design.colors.book ? design.colors.book[lvl] : design.colors.robe[lvl],
-    orb: design.colors.orb ? design.colors.orb[lvl] : design.colors.robe[lvl],
-    crystal: design.colors.crystal ? design.colors.crystal[lvl] : design.colors.robe[lvl],
-    time: design.colors.time ? design.colors.time[lvl] : design.colors.robe[lvl]
-  };
-
-  return `<svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">${design.svg(colors)}</svg>`;
-}
-
-// Rendering
-function updateDisplay() {
-  document.getElementById('inkDisplay').textContent = Math.floor(state.ink).toLocaleString();
-  document.getElementById('wisdomDisplay').textContent = state.wisdom.toLocaleString();
-  document.getElementById('rateDisplay').textContent = calculateInkRate().toFixed(1);
-
-  const estimatedWisdom = Math.floor(Math.sqrt(state.ink / 500));
-  document.getElementById('prestigeValue').textContent = estimatedWisdom;
-  document.getElementById('prestigeBonus').textContent = 
-    `+${(state.wisdom * 5).toFixed(0)}% Ink/sec · +${(state.wisdom * 2).toFixed(0)}% click power`;
-}
-
-function renderCharacters() {
-  const grid = document.getElementById('characterGrid');
-  grid.innerHTML = '';
-
-  characterConfigs.forEach(cfg => {
-    const count = state.characters[cfg.id] || 0;
-    const cost = getCost(cfg.baseCost, count);
-    const canAfford = state.ink >= cost;
-
-    const item = document.createElement('div');
-    item.className = 'character-item';
-    item.innerHTML = `
-      <div class="character-avatar">
-        ${getCharacterSVG(cfg.id, count)}
-      </div>
-      <div class="character-name">${cfg.name}</div>
-      <div class="character-count">× ${count}</div>
-      <div class="character-production">${(cfg.baseRate * count).toFixed(1)} Ink/sec</div>
-      <button class="hire-btn" ${!canAfford ? 'disabled' : ''}>
-        Hire: ${cost.toLocaleString()}
-      </button>
-    `;
-
-    item.querySelector('button').addEventListener('click', () => {
-      if (state.ink >= cost) {
-        state.ink -= cost;
-        state.characters[cfg.id] = count + 1;
-        updateDisplay();
-        renderCharacters();
-        saveState();
-      }
-    });
-
-    grid.appendChild(item);
-  });
-}
-
-function renderPassiveUpgrades() {
-  const container = document.getElementById('passiveUpgrades');
-  container.innerHTML = '';
-
-  passiveUpgradeConfigs.forEach(cfg => {
-    const level = state.passiveUpgrades[cfg.id] || 0;
-    const cost = getCost(cfg.baseCost, level);
-    const canAfford = state.ink >= cost;
-
-    const item = document.createElement('div');
-    item.className = 'upgrade-item';
-    item.innerHTML = `
-      <div class="upgrade-info">
-        <div class="upgrade-title">${cfg.name} ${level > 0 ? `Lv.${level}` : ''}</div>
-        <div class="upgrade-desc">${cfg.desc}</div>
-        <div class="upgrade-stats">+${cfg.rate.toFixed(1)} Ink/sec</div>
-      </div>
-      <button class="upgrade-btn" ${!canAfford ? 'disabled' : ''}>
-        ${cost.toLocaleString()}
-      </button>
-    `;
-
-    item.querySelector('button').addEventListener('click', () => {
-      if (state.ink >= cost) {
-        state.ink -= cost;
-        state.passiveUpgrades[cfg.id] = level + 1;
-        updateDisplay();
-        renderPassiveUpgrades();
-        saveState();
-      }
-    });
-
-    container.appendChild(item);
-  });
-}
-
-function renderClickUpgrades() {
-  const container = document.getElementById('clickUpgrades');
-  container.innerHTML = '';
-
-  clickUpgradeConfigs.forEach(cfg => {
-    const level = state.clickUpgrades[cfg.id] || 0;
-    const cost = getCost(cfg.baseCost, level);
-    const canAfford = state.ink >= cost;
-
-    const item = document.createElement('div');
-    item.className = 'upgrade-item';
-    item.innerHTML = `
-      <div class="upgrade-info">
-        <div class="upgrade-title">${cfg.name} ${level > 0 ? `Lv.${level}` : ''}</div>
-        <div class="upgrade-desc">${cfg.desc}</div>
-        <div class="upgrade-stats">+${cfg.power} per click</div>
-      </div>
-      <button class="upgrade-btn" ${!canAfford ? 'disabled' : ''}>
-        ${cost.toLocaleString()}
-      </button>
-    `;
-
-    item.querySelector('button').addEventListener('click', () => {
-      if (state.ink >= cost) {
-        state.ink -= cost;
-        state.clickUpgrades[cfg.id] = level + 1;
-        updateDisplay();
-        renderClickUpgrades();
-        saveState();
-      }
-    });
-
-    container.appendChild(item);
-  });
-}
-
-// Tabs
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-
-    const tab = btn.dataset.tab;
-    document.querySelectorAll('.tab-panel').forEach(p => {
-      p.classList.remove('active');
-      if (p.id === tab) p.classList.add('active');
-    });
-  });
-});
-
-// Study Boon
-document.getElementById('studyBtn').addEventListener('click', () => {
-  if (!state.studyBoonActive) {
-    state.studyBoonActive = true;
-    state.studyBoonTime = 25 * 60;
-    saveState();
-    updateStudyUI();
-  }
-});
-
-function updateStudyUI() {
-  const btn = document.getElementById('studyBtn');
-  const fill = document.getElementById('timerFill');
-
-  if (state.studyBoonActive) {
-    const m = Math.floor(state.studyBoonTime / 60);
-    const s = Math.floor(state.studyBoonTime % 60);
-    btn.textContent = `Active: ${m}:${s.toString().padStart(2, '0')}`;
-    btn.disabled = true;
-    const pct = (state.studyBoonTime / (25 * 60)) * 100;
-    fill.style.width = pct + '%';
-  } else {
-    btn.textContent = 'Begin Study Session';
-    btn.disabled = false;
-    fill.style.width = '0%';
-  }
-}
-
-// Prestige
-document.getElementById('prestigeBtn').addEventListener('click', () => {
-  const gain = Math.floor(Math.sqrt(state.ink / 500));
-  if (gain === 0) return;
-
-  if (confirm(`Restore the Archive for ${gain} Wisdom Pages? This resets Ink and upgrades.`)) {
-    state.wisdom += gain;
-    state.ink = 0;
-    state.passiveUpgrades = {};
-    state.clickUpgrades = {};
-    state.studyBoonActive = false;
-    state.studyBoonTime = 0;
-    // Characters persist!
-
-    saveState();
-    updateDisplay();
-    renderPassiveUpgrades();
-    renderClickUpgrades();
-    updateStudyUI();
-  }
-});
-
-// Game loop
-function gameTick() {
-  const now = performance.now();
-  const dt = (now - lastTick) / 1000;
-  lastTick = now;
-
-  // Income
-  const rate = calculateInkRate();
-  state.ink += rate * dt;
-
-  // Study timer
-  if (state.studyBoonActive) {
-    state.studyBoonTime = Math.max(0, state.studyBoonTime - dt);
-    if (state.studyBoonTime === 0) {
-      state.studyBoonActive = false;
-    }
-    updateStudyUI();
-  }
-
-  updateDisplay();
-}
-
-setInterval(gameTick, 100);
-setInterval(saveState, 5000);
-
-// Save/Load
-function saveState() {
-  localStorage.setItem(STATE_KEY, JSON.stringify(state));
-}
-
+// State management
 function loadState() {
   try {
-    const data = localStorage.getItem(STATE_KEY);
-    if (data) {
-      const loaded = JSON.parse(data);
-      Object.assign(state, loaded);
+    const saved = localStorage.getItem(STATE_KEY);
+    if (saved) {
+      const data = JSON.parse(saved);
+      Object.assign(state, data);
+      
+      // Check if new day
+      const today = new Date().toDateString();
+      if (state.lastStudyDate !== today) {
+        // Check if streak should continue (studied yesterday)
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        if (state.lastStudyDate !== yesterday.toDateString()) {
+          state.streak = 0; // Streak broken
+        }
+        state.todayMinutes = 0;
+      }
+      
+      // Apply saved settings
+      applySavedSettings();
     }
   } catch (e) {
     console.warn('Failed to load state:', e);
   }
 }
 
-// Initialize
-loadState();
-updateDisplay();
-renderCharacters();
-renderPassiveUpgrades();
-renderClickUpgrades();
-updateStudyUI();
+function saveState() {
+  try {
+    localStorage.setItem(STATE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.warn('Failed to save state:', e);
+  }
+}
+
+function applySavedSettings() {
+  candleSlider.value = state.candleCount;
+  candleCountEl.textContent = state.candleCount;
+  soundToggle.checked = state.soundEnabled;
+  particlesToggle.checked = state.particlesEnabled;
+  
+  document.querySelectorAll('[data-time]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.time === state.timeOfDay);
+  });
+}
+
+// Canvas setup
+function setupCanvas() {
+  canvas = document.getElementById('towerCanvas');
+  ctx = canvas.getContext('2d');
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  
+  // Initialize candle flames
+  updateCandles();
+}
+
+function resizeCanvas() {
+  canvasWidth = canvas.width = window.innerWidth;
+  canvasHeight = canvas.height = window.innerHeight;
+}
+
+// Event listeners
+function setupEventListeners() {
+  startBtn.addEventListener('click', startTimer);
+  pauseBtn.addEventListener('click', pauseTimer);
+  resetBtn.addEventListener('click', resetTimer);
+  
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      timerMinutes = parseInt(e.target.dataset.minutes);
+      timerSeconds = 0;
+      updateTimerDisplay();
+    });
+  });
+  
+  document.querySelectorAll('[data-time]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      document.querySelectorAll('[data-time]').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      state.timeOfDay = e.target.dataset.time;
+      saveState();
+    });
+  });
+  
+  candleSlider.addEventListener('input', (e) => {
+    state.candleCount = parseInt(e.target.value);
+    candleCountEl.textContent = state.candleCount;
+    updateCandles();
+    saveState();
+  });
+  
+  soundToggle.addEventListener('change', (e) => {
+    state.soundEnabled = e.target.checked;
+    saveState();
+  });
+  
+  particlesToggle.addEventListener('change', (e) => {
+    state.particlesEnabled = e.target.checked;
+    saveState();
+  });
+  
+  aboutBtn.addEventListener('click', () => {
+    aboutModal.classList.add('active');
+  });
+  
+  closeModal.addEventListener('click', () => {
+    aboutModal.classList.remove('active');
+  });
+  
+  aboutModal.addEventListener('click', (e) => {
+    if (e.target === aboutModal) {
+      aboutModal.classList.remove('active');
+    }
+  });
+}
+
+// Timer functions
+function startTimer() {
+  if (timerRunning) return;
+  
+  timerRunning = true;
+  startBtn.style.display = 'none';
+  pauseBtn.style.display = 'inline-flex';
+  timerLabel.textContent = 'Studying...';
+  
+  timerInterval = setInterval(() => {
+    if (timerSeconds === 0) {
+      if (timerMinutes === 0) {
+        completeSession();
+        return;
+      }
+      timerMinutes--;
+      timerSeconds = 59;
+    } else {
+      timerSeconds--;
+    }
+    updateTimerDisplay();
+  }, 1000);
+}
+
+function pauseTimer() {
+  timerRunning = false;
+  clearInterval(timerInterval);
+  startBtn.style.display = 'inline-flex';
+  pauseBtn.style.display = 'none';
+  timerLabel.textContent = 'Paused';
+}
+
+function resetTimer() {
+  pauseTimer();
+  timerMinutes = parseInt(document.querySelector('.preset-btn.active').dataset.minutes);
+  timerSeconds = 0;
+  timerLabel.textContent = 'Ready to Study';
+  updateTimerDisplay();
+}
+
+function completeSession() {
+  pauseTimer();
+  
+  // Update stats
+  const sessionMinutes = parseInt(document.querySelector('.preset-btn.active').dataset.minutes);
+  state.totalSessions++;
+  state.todayMinutes += sessionMinutes;
+  
+  const today = new Date().toDateString();
+  if (state.lastStudyDate !== today) {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (state.lastStudyDate === yesterday.toDateString()) {
+      state.streak++;
+    } else {
+      state.streak = 1;
+    }
+    state.lastStudyDate = today;
+  }
+  
+  saveState();
+  updateDisplay();
+  
+  timerLabel.textContent = '✨ Session Complete! Well done, wizard!';
+  showRandomQuote();
+  
+  // Reset for next session
+  setTimeout(() => {
+    resetTimer();
+  }, 3000);
+  
+  // Celebration particles
+  if (state.particlesEnabled) {
+    for (let i = 0; i < 30; i++) {
+      particles.push(new Particle(canvasWidth / 2, canvasHeight / 2, true));
+    }
+  }
+}
+
+function updateTimerDisplay() {
+  const mins = String(timerMinutes).padStart(2, '0');
+  const secs = String(timerSeconds).padStart(2, '0');
+  timerDisplay.textContent = `${mins}:${secs}`;
+}
+
+// Display updates
+function updateDisplay() {
+  totalSessionsEl.textContent = state.totalSessions;
+  
+  const hours = Math.floor(state.todayMinutes / 60);
+  const mins = state.todayMinutes % 60;
+  todayTimeEl.textContent = `${hours}h ${mins}m`;
+  
+  streakEl.textContent = `${state.streak} day${state.streak !== 1 ? 's' : ''}`;
+}
+
+function updateRealTime() {
+  const now = new Date();
+  const hours = now.getHours() % 12 || 12;
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const ampm = now.getHours() >= 12 ? 'PM' : 'AM';
+  realTimeEl.textContent = `${hours}:${minutes} ${ampm}`;
+}
+
+function showRandomQuote() {
+  const quote = quotes[Math.floor(Math.random() * quotes.length)];
+  motivationText.textContent = quote;
+}
+
+// Canvas animation
+function updateCandles() {
+  candleFlames = [];
+  const spacing = 80;
+  const startX = canvasWidth / 2 - ((state.candleCount - 1) * spacing) / 2;
+  const y = canvasHeight * 0.7;
+  
+  for (let i = 0; i < state.candleCount; i++) {
+    candleFlames.push({
+      x: startX + i * spacing,
+      y: y,
+      flicker: Math.random() * Math.PI * 2,
+      speed: 0.05 + Math.random() * 0.05
+    });
+  }
+}
+
+// Particle class
+class Particle {
+  constructor(x, y, celebrate = false) {
+    this.x = x;
+    this.y = y;
+    this.celebrate = celebrate;
+    
+    if (celebrate) {
+      this.vx = (Math.random() - 0.5) * 8;
+      this.vy = (Math.random() - 0.5) * 8 - 2;
+      this.life = 1;
+      this.decay = 0.02;
+      this.size = 3 + Math.random() * 3;
+      this.color = `hsl(${Math.random() * 60 + 20}, 80%, 60%)`;
+    } else {
+      this.vx = (Math.random() - 0.5) * 0.5;
+      this.vy = -0.5 - Math.random() * 1;
+      this.life = 1;
+      this.decay = 0.01;
+      this.size = 1 + Math.random() * 2;
+      this.color = 'rgba(255, 200, 100, 0.8)';
+    }
+  }
+  
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.life -= this.decay;
+    
+    if (!this.celebrate) {
+      this.vx *= 0.99;
+      this.vy *= 0.99;
+    } else {
+      this.vy += 0.2; // gravity
+    }
+  }
+  
+  draw() {
+    ctx.save();
+    ctx.globalAlpha = this.life;
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+  
+  isDead() {
+    return this.life <= 0;
+  }
+}
+
+// Get time of day colors
+function getTimeColors() {
+  const colors = {
+    evening: {
+      sky: ['#1a0f2e', '#2d1b3d', '#4a2c5e'],
+      stars: 0.3,
+      moon: true
+    },
+    night: {
+      sky: ['#0a0514', '#150820', '#1f0d2e'],
+      stars: 0.6,
+      moon: true
+    },
+    dawn: {
+      sky: ['#2d1b3d', '#5e3a5e', '#8b5a7d'],
+      stars: 0.1,
+      moon: false
+    }
+  };
+  return colors[state.timeOfDay] || colors.evening;
+}
+
+// Draw functions
+function drawBackground() {
+  const colors = getTimeColors();
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
+  gradient.addColorStop(0, colors.sky[0]);
+  gradient.addColorStop(0.5, colors.sky[1]);
+  gradient.addColorStop(1, colors.sky[2]);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+}
+
+function drawStars() {
+  const colors = getTimeColors();
+  if (colors.stars > 0) {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    const starCount = Math.floor(50 * colors.stars);
+    for (let i = 0; i < starCount; i++) {
+      const x = (i * 137.508) % canvasWidth; // golden angle
+      const y = (i * 197.508) % (canvasHeight * 0.6);
+      const size = Math.random() * 1.5;
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
+function drawMoon() {
+  const colors = getTimeColors();
+  if (colors.moon) {
+    const x = canvasWidth * 0.8;
+    const y = canvasHeight * 0.2;
+    const radius = 40;
+    
+    const gradient = ctx.createRadialGradient(x, y, radius * 0.3, x, y, radius);
+    gradient.addColorStop(0, 'rgba(255, 250, 230, 1)');
+    gradient.addColorStop(0.7, 'rgba(240, 235, 210, 0.8)');
+    gradient.addColorStop(1, 'rgba(240, 235, 210, 0)');
+    
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Moon glow
+    ctx.fillStyle = 'rgba(255, 250, 230, 0.1)';
+    ctx.beginPath();
+    ctx.arc(x, y, radius * 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawTower() {
+  const centerX = canvasWidth / 2;
+  const baseY = canvasHeight * 0.85;
+  const towerWidth = Math.min(300, canvasWidth * 0.4);
+  const towerHeight = canvasHeight * 0.6;
+  
+  // Tower body
+  ctx.fillStyle = '#2a1810';
+  ctx.beginPath();
+  ctx.moveTo(centerX - towerWidth / 2, baseY);
+  ctx.lineTo(centerX - towerWidth / 2.5, baseY - towerHeight);
+  ctx.lineTo(centerX + towerWidth / 2.5, baseY - towerHeight);
+  ctx.lineTo(centerX + towerWidth / 2, baseY);
+  ctx.closePath();
+  ctx.fill();
+  
+  // Tower shading
+  const gradient = ctx.createLinearGradient(
+    centerX - towerWidth / 2, baseY,
+    centerX + towerWidth / 2, baseY
+  );
+  gradient.addColorStop(0, 'rgba(0, 0, 0, 0.4)');
+  gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
+  gradient.addColorStop(1, 'rgba(0, 0, 0, 0.3)');
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.moveTo(centerX - towerWidth / 2, baseY);
+  ctx.lineTo(centerX - towerWidth / 2.5, baseY - towerHeight);
+  ctx.lineTo(centerX + towerWidth / 2.5, baseY - towerHeight);
+  ctx.lineTo(centerX + towerWidth / 2, baseY);
+  ctx.closePath();
+  ctx.fill();
+  
+  // Tower roof
+  ctx.fillStyle = '#1a0f08';
+  ctx.beginPath();
+  ctx.moveTo(centerX - towerWidth / 2.2, baseY - towerHeight);
+  ctx.lineTo(centerX, baseY - towerHeight - 60);
+  ctx.lineTo(centerX + towerWidth / 2.2, baseY - towerHeight);
+  ctx.closePath();
+  ctx.fill();
+  
+  // Window
+  const windowY = baseY - towerHeight * 0.6;
+  const windowWidth = towerWidth * 0.35;
+  const windowHeight = towerHeight * 0.25;
+  
+  // Window glow
+  const windowGlow = ctx.createRadialGradient(
+    centerX, windowY + windowHeight / 2, 0,
+    centerX, windowY + windowHeight / 2, windowWidth
+  );
+  windowGlow.addColorStop(0, 'rgba(255, 180, 80, 0.4)');
+  windowGlow.addColorStop(1, 'rgba(255, 180, 80, 0)');
+  ctx.fillStyle = windowGlow;
+  ctx.beginPath();
+  ctx.arc(centerX, windowY + windowHeight / 2, windowWidth * 1.5, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Window frame
+  ctx.fillStyle = '#8b5a3c';
+  ctx.fillRect(
+    centerX - windowWidth / 2,
+    windowY,
+    windowWidth,
+    windowHeight
+  );
+  
+  // Window panes
+  ctx.fillStyle = 'rgba(255, 200, 100, 0.8)';
+  ctx.fillRect(
+    centerX - windowWidth / 2 + 5,
+    windowY + 5,
+    windowWidth - 10,
+    windowHeight - 10
+  );
+  
+  // Window cross
+  ctx.fillStyle = '#5d3a22';
+  ctx.fillRect(centerX - 2, windowY, 4, windowHeight);
+  ctx.fillRect(
+    centerX - windowWidth / 2,
+    windowY + windowHeight / 2 - 2,
+    windowWidth,
+    4
+  );
+}
+
+function drawDesk() {
+  const centerX = canvasWidth / 2;
+  const deskY = canvasHeight * 0.7;
+  const deskWidth = 200;
+  const deskHeight = 40;
+  
+  // Desk
+  ctx.fillStyle = '#5d3a22';
+  ctx.fillRect(centerX - deskWidth / 2, deskY, deskWidth, deskHeight);
+  
+  // Desk top
+  ctx.fillStyle = '#8b5a3c';
+  ctx.fillRect(centerX - deskWidth / 2, deskY, deskWidth, 8);
+  
+  // Papers
+  ctx.fillStyle = 'rgba(245, 235, 220, 0.9)';
+  ctx.fillRect(centerX - 60, deskY + 12, 50, 35);
+  ctx.fillRect(centerX - 55, deskY + 10, 50, 35);
+  
+  // Ink bottle
+  ctx.fillStyle = '#1a0a3e';
+  ctx.beginPath();
+  ctx.arc(centerX + 40, deskY + 25, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillRect(centerX + 36, deskY + 18, 8, 7);
+  
+  // Quill
+  ctx.strokeStyle = '#8b6f47';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(centerX + 50, deskY + 30);
+  ctx.lineTo(centerX + 65, deskY + 15);
+  ctx.stroke();
+  
+  // Quill tip
+  ctx.fillStyle = '#c9a86a';
+  ctx.beginPath();
+  ctx.moveTo(centerX + 65, deskY + 15);
+  ctx.lineTo(centerX + 62, deskY + 20);
+  ctx.lineTo(centerX + 68, deskY + 20);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawCandles() {
+  candleFlames.forEach(candle => {
+    // Candle body
+    ctx.fillStyle = '#f4f0e7';
+    ctx.fillRect(candle.x - 6, candle.y, 12, 30);
+    
+    // Candle shading
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.fillRect(candle.x - 6, candle.y, 3, 30);
+    
+    // Flame flicker
+    candle.flicker += candle.speed;
+    const flicker = Math.sin(candle.flicker) * 2;
+    const flameHeight = 15 + flicker;
+    const flameY = candle.y - flameHeight;
+    
+    // Flame glow
+    const glowGradient = ctx.createRadialGradient(
+      candle.x, flameY + 5, 0,
+      candle.x, flameY + 5, 30
+    );
+    glowGradient.addColorStop(0, 'rgba(255, 200, 100, 0.6)');
+    glowGradient.addColorStop(1, 'rgba(255, 200, 100, 0)');
+    ctx.fillStyle = glowGradient;
+    ctx.beginPath();
+    ctx.arc(candle.x, flameY + 5, 30, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Flame
+    const flameGradient = ctx.createRadialGradient(
+      candle.x, flameY + flameHeight / 2, 0,
+      candle.x, flameY + flameHeight / 2, 8
+    );
+    flameGradient.addColorStop(0, '#fff5d6');
+    flameGradient.addColorStop(0.4, '#ffb347');
+    flameGradient.addColorStop(1, '#ff6b35');
+    ctx.fillStyle = flameGradient;
+    ctx.beginPath();
+    ctx.ellipse(candle.x, flameY + flameHeight / 2, 6, flameHeight / 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Add particles
+    if (state.particlesEnabled && Math.random() < 0.3) {
+      particles.push(new Particle(candle.x, flameY));
+    }
+  });
+}
+
+function drawParticles() {
+  if (!state.particlesEnabled) {
+    particles = [];
+    return;
+  }
+  
+  particles = particles.filter(p => !p.isDead());
+  particles.forEach(p => {
+    p.update();
+    p.draw();
+  });
+}
+
+// Animation loop
+function animate() {
+  drawBackground();
+  drawStars();
+  drawMoon();
+  drawTower();
+  drawDesk();
+  drawCandles();
+  drawParticles();
+  
+  requestAnimationFrame(animate);
+}
+
+// Initialize on load
+window.addEventListener('load', init);
