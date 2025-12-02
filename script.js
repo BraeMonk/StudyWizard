@@ -133,6 +133,8 @@ const closeBookModal = document.getElementById('closeBookModal');
 const bookTextEl = document.getElementById('bookText');
 const resetBtn = document.getElementById('resetBtn');
 
+const overlayUI = document.querySelector('.overlay-ui');
+
 // Wisdom quotes for books
 const wisdomQuotes = [
   "Magic is not in spells, but in understanding the world around you.",
@@ -291,6 +293,8 @@ function updateDisplay() {
   manaRateEl.textContent = state.manaRate.toFixed(1) + ' / sec';
   wisdomLevelEl.textContent = state.wisdomLevel;
   cozyScoreEl.textContent = state.cozyScore;
+
+  updateCozyGlow();
 }
 
 function showClickFeedback(x, y, text) {
@@ -378,19 +382,21 @@ function purchaseUpgrade(upgrade, cost) {
 // Achievements
 function checkAchievements() {
   let newUnlock = false;
-
+  const newlyUnlockedIds = [];
+  
   achievementsConfig.forEach(ach => {
     if (!state.achievements[ach.id] && ach.check()) {
       state.achievements[ach.id] = true;
       newUnlock = true;
+      newlyUnlockedIds.push(ach.id);
       state.cozyScore += 5;
     }
   });
-
+  
   if (newUnlock) {
     renderAchievements();
     saveState();
-    updateUIThemeForTime();
+    highlightNewAchievements(newlyUnlockedIds);
   }
 }
 
@@ -403,6 +409,8 @@ function renderAchievements() {
     const item = document.createElement('div');
     item.className = 'achievement-item' + (unlocked ? ' unlocked' : ' locked');
 
+    item.dataset.achievementId = ach.id;
+
     item.innerHTML = `
       <div class="achievement-icon">${ach.icon}</div>
       <div class="achievement-name">${ach.name}</div>
@@ -411,6 +419,34 @@ function renderAchievements() {
 
     achievementsListEl.appendChild(item);
   });
+}
+
+function highlightNewAchievements(ids) {
+  // let the DOM paint first so animation always triggers
+  requestAnimationFrame(() => {
+    ids.forEach(id => {
+      const el = document.querySelector(`[data-achievement-id="${id}"]`);
+      if (!el) return;
+      el.classList.add('just-unlocked');
+      setTimeout(() => {
+        el.classList.remove('just-unlocked');
+      }, 800);
+    });
+  });
+}
+
+function updateCozyGlow() {
+  if (!overlayUI) return;
+  overlayUI.classList.remove('cozy-glow-1', 'cozy-glow-2', 'cozy-glow-3');
+  
+  const score = state.cozyScore;
+  if (score >= 150) {
+    overlayUI.classList.add('cozy-glow-3');
+  } else if (score >= 100) {
+    overlayUI.classList.add('cozy-glow-2');
+  } else if (score >= 70) {
+    overlayUI.classList.add('cozy-glow-1');
+  }
 }
 
 // Canvas Setup
