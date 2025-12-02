@@ -1,5 +1,5 @@
 // Wizard's Cozy Tower - Gamified Interactive Version
-const STATE_KEY = "WizardCozyTower_v1";
+const STATE_KEY = "WizardCozyTower_v2";
 
 // Game State
 const state = {
@@ -12,147 +12,176 @@ const state = {
   candleCount: 3,
   soundEnabled: true,
   particlesEnabled: true,
+
+  // Progress / meta
   totalClicks: 0,
   booksRead: 0,
   upgrades: {},
   achievements: {},
-  lastSave: Date.now()
+  lastSave: Date.now(),
+
+  // New meta-progression
+  towerRank: 1,
+  towerXp: 0,
+  towerXpToNext: 100,
+
+  // Lifetime counters (for quests)
+  totalManaEarned: 0,
+  totalScrollsEarned: 0,
+
+  // Daily quest
+  dailyQuest: null,
+  lastQuestDate: null,
+
+  // Soft stats
+  playTimeSeconds: 0,
+  towerLog: []
 };
 
-// Upgrades Config
+// Upgrade definitions
 const upgradesConfig = [
   {
     id: "candle_power",
     name: "Candle Enchantment",
     icon: "🕯️",
-    desc: "Candles generate more mana",
+    desc: "Candles generate more mana per click.",
     baseCost: 50,
     costMult: 1.5,
     effect: () => {
       state.manaRate += 0.3;
+      addLogEntry("Your candle flames burn brighter.", "🕯️");
     },
-    costType: "mana"
+    costType: "mana",
+    category: "mana"
   },
   {
     id: "bookshelf",
     name: "Ancient Bookshelf",
     icon: "📚",
-    desc: "Unlock more wisdom from books",
-    baseCost: 100,
+    desc: "Books grant extra wisdom & cozy score.",
+    baseCost: 120,
     costMult: 1.8,
     effect: () => {
       state.cozyScore += 10;
+      addLogEntry("Dusty tomes whisper new secrets.", "📚");
     },
-    costType: "mana"
+    costType: "mana",
+    category: "wisdom"
   },
   {
     id: "crystal_ball",
     name: "Crystal Ball",
     icon: "🔮",
-    desc: "Passive mana generation",
-    baseCost: 200,
+    desc: "Passive mana trickles in over time.",
+    baseCost: 220,
     costMult: 2.0,
     effect: () => {
-      state.manaRate += 0.5;
+      state.manaRate += 0.7;
+      addLogEntry("The crystal ball hums with soft energy.", "🔮");
     },
-    costType: "mana"
+    costType: "mana",
+    category: "mana"
   },
   {
     id: "magic_carpet",
     name: "Flying Carpet",
     icon: "🧞",
-    desc: "Gather scrolls automatically",
-    baseCost: 20,
+    desc: "Occasional windfalls of scrolls.",
+    baseCost: 40,
     costMult: 1.6,
     effect: () => {
-      // Instant little reward when purchased; passive effect handled in gameLoop
-      state.scrolls += 5;
+      // Instead of flat scrolls once, we’ll give a passive bonus in gameLoop.
+      addLogEntry("A flying carpet begins bringing scrolls.", "🧞");
     },
-    costType: "scrolls"
+    costType: "scrolls",
+    category: "scroll"
   },
   {
     id: "moon_ritual",
     name: "Moon Ritual",
     icon: "🌙",
-    desc: "Night time bonus mana",
+    desc: "Big mana bonus at night.",
     baseCost: 300,
     costMult: 2.2,
     effect: () => {
-      // Actual night bonus is calculated in gameLoop based on level & timeOfDay
-      state.cozyScore += 5;
+      state.manaRate += 1.0;
+      addLogEntry("The moon’s pull deepens your magic.", "🌙");
     },
-    costType: "mana"
+    costType: "mana",
+    category: "mana"
   },
   {
     id: "cozy_chair",
     name: "Velvet Reading Chair",
     icon: "🛋️",
-    desc: "Increase tower coziness",
+    desc: "Greatly increases cozy score.",
     baseCost: 150,
     costMult: 1.7,
     effect: () => {
-      state.cozyScore += 15;
+      state.cozyScore += 18;
+      addLogEntry("You sink into a velvet chair. Cozy!", "🛋️");
     },
-    costType: "mana"
+    costType: "mana",
+    category: "cozy"
   }
 ];
 
-// Achievements Config
+// Achievements
 const achievementsConfig = [
   {
     id: "first_click",
     name: "First Spark",
     icon: "✨",
-    desc: "Click a candle",
+    desc: "Click a candle once.",
     check: () => state.totalClicks >= 1
   },
   {
     id: "book_worm",
     name: "Book Worm",
     icon: "📖",
-    desc: "Read 5 books",
+    desc: "Read 5 books.",
     check: () => state.booksRead >= 5
   },
   {
     id: "mana_hoarder",
     name: "Mana Hoarder",
     icon: "💎",
-    desc: "Collect 1000 mana",
-    check: () => state.mana >= 1000
+    desc: "Accumulate 1,000 total mana.",
+    check: () => state.totalManaEarned >= 1000
   },
   {
     id: "wisdom_seeker",
     name: "Wisdom Seeker",
     icon: "🧙",
-    desc: "Reach wisdom level 10",
+    desc: "Reach wisdom level 10.",
     check: () => state.wisdomLevel >= 10
   },
   {
     id: "night_owl",
     name: "Night Owl",
     icon: "🦉",
-    desc: "Use night mode",
+    desc: "Spend time studying at night.",
     check: () => state.timeOfDay === "night"
   },
   {
     id: "cozy_master",
     name: "Cozy Master",
     icon: "🏡",
-    desc: "Reach 100 cozy score",
+    desc: "Reach 100 cozy score.",
     check: () => state.cozyScore >= 100
   },
   {
     id: "collector",
     name: "Scroll Collector",
     icon: "📜",
-    desc: "Collect 100 scrolls",
-    check: () => state.scrolls >= 100
+    desc: "Collect 100 scrolls total.",
+    check: () => state.totalScrollsEarned >= 100
   },
   {
     id: "clicker",
     name: "Enthusiast",
     icon: "👆",
-    desc: "Click 100 times",
+    desc: "Click 100 times.",
     check: () => state.totalClicks >= 100
   }
 ];
@@ -172,9 +201,10 @@ let clickableZones = {
   window: null
 };
 
-// Audio (SFX only, no ambience)
+// Audio
 let candleSfx, bookSfx, windowSfx;
 
+// UI timing
 let uiTick = 0;
 
 // DOM Elements
@@ -198,6 +228,21 @@ const bookTextEl = document.getElementById("bookText");
 const resetBtn = document.getElementById("resetBtn");
 
 const overlayUI = document.querySelector(".overlay-ui");
+
+// New UI refs
+const towerRankLabel = document.getElementById("towerRankLabel");
+const manaMultiplierEl = document.getElementById("manaMultiplier");
+const playtimeLabel = document.getElementById("playtimeLabel");
+
+const questTitleEl = document.getElementById("questTitle");
+const questDescriptionEl = document.getElementById("questDescription");
+const questProgressTextEl = document.getElementById("questProgressText");
+const questProgressBarInner = document.getElementById("questProgressBarInner");
+const questRewardTextEl = document.getElementById("questRewardText");
+const questClaimBtn = document.getElementById("questClaimBtn");
+
+const logListEl = document.getElementById("logList");
+const toastContainer = document.getElementById("toastContainer");
 
 // Wisdom quotes for books
 const wisdomQuotes = [
@@ -230,35 +275,98 @@ const uiThemes = {
   }
 };
 
-// Helper: upgrade level
-function getUpgradeLevel(id) {
-  return (state.upgrades && typeof state.upgrades[id] === "number") ? state.upgrades[id] : 0;
+/* ------------ Utility & Meta Progression Helpers ------------ */
+
+function showToast(message, icon = "✨") {
+  if (!toastContainer) return;
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-text">${message}</span>`;
+  toastContainer.appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.classList.add("visible");
+  });
+
+  setTimeout(() => {
+    toast.classList.remove("visible");
+    setTimeout(() => {
+      toast.remove();
+    }, 300);
+  }, 2600);
 }
 
-// Initialize
-function init() {
-  loadState();
-  setupCanvas();
-  setupAudio(); // only SFX now
-  setupEventListeners();
-  updateDisplay();
-  renderUpgrades();
-  renderAchievements();
-  updateUIThemeForTime();
+function addLogEntry(text, emoji = "✨") {
+  if (!state.towerLog) state.towerLog = [];
+  state.towerLog.unshift({
+    text,
+    emoji,
+    ts: Date.now()
+  });
+  // Cap log length
+  if (state.towerLog.length > 40) {
+    state.towerLog.length = 40;
+  }
+  renderTowerLog();
+}
 
-  // Check if first time
-  if (state.totalClicks === 0 && welcomeCard) {
-    welcomeCard.classList.remove("hidden");
-  } else if (welcomeCard) {
-    welcomeCard.classList.add("hidden");
+function addTowerXp(amount) {
+  if (amount <= 0) return;
+  state.towerXp += amount;
+
+  let rankedUp = false;
+  while (state.towerXp >= state.towerXpToNext) {
+    state.towerXp -= state.towerXpToNext;
+    state.towerRank += 1;
+    state.towerXpToNext = Math.floor(state.towerXpToNext * 1.35 + 30);
+    state.cozyScore += 3;
+    rankedUp = true;
+    addLogEntry(`Your tower reached Rank ${state.towerRank}.`, "🏰");
   }
 
-  // Start game loop
-  setInterval(gameLoop, 100);
-  animate();
+  if (rankedUp) {
+    showToast(`Tower Rank ${state.towerRank} reached!`, "🏰");
+  }
+
+  updateMetaDisplay();
 }
 
-// Audio setup (SFX only)
+function getManaMultiplier() {
+  // Cozy gives up to +75% bonus around 150 cozy
+  const cozyFactor = Math.min(state.cozyScore, 150) / 150;
+  const cozyBonus = 1 + cozyFactor * 0.75;
+
+  // Each tower rank beyond 1 gives +5%
+  const rankBonus = 1 + (state.towerRank - 1) * 0.05;
+
+  return cozyBonus * rankBonus;
+}
+
+function gainMana(amount, opts = {}) {
+  if (amount <= 0) return;
+  const { fromOffline = false, fromPassive = false } = opts;
+
+  state.mana += amount;
+  state.totalManaEarned = (state.totalManaEarned || 0) + amount;
+
+  // XP from mana, slightly reduced for pure passive income
+  const xpFactor = fromPassive ? 0.03 : 0.1;
+  addTowerXp(amount * xpFactor);
+
+  if (!fromOffline && !fromPassive && amount >= 5) {
+    // optional: log big gains later if you want
+  }
+}
+
+function gainScrolls(amount) {
+  if (amount <= 0) return;
+  state.scrolls += amount;
+  state.totalScrollsEarned = (state.totalScrollsEarned || 0) + amount;
+  addTowerXp(amount * 0.2);
+}
+
+/* ------------ Audio setup ------------ */
+
 function setupAudio() {
   try {
     candleSfx = new Audio("audio/candle_click.wav");
@@ -284,7 +392,8 @@ function playSfx(audio) {
   }
 }
 
-// State Management
+/* ------------ State Management ------------ */
+
 function loadState() {
   try {
     const saved = localStorage.getItem(STATE_KEY);
@@ -292,17 +401,26 @@ function loadState() {
       const data = JSON.parse(saved);
       Object.assign(state, data);
 
-      // Make sure new keys exist if user is loading an older save
+      // Patch in any new fields for older saves
+      if (typeof state.towerRank !== "number") state.towerRank = 1;
+      if (typeof state.towerXp !== "number") state.towerXp = 0;
+      if (typeof state.towerXpToNext !== "number")
+        state.towerXpToNext = 100;
+      if (typeof state.totalManaEarned !== "number")
+        state.totalManaEarned = 0;
+      if (typeof state.totalScrollsEarned !== "number")
+        state.totalScrollsEarned = 0;
+      if (!Array.isArray(state.towerLog)) state.towerLog = [];
       if (!state.upgrades) state.upgrades = {};
       if (!state.achievements) state.achievements = {};
 
-      upgradesConfig.forEach(up => {
+      // Ensure config-defined upgrades/achievements exist in state
+      upgradesConfig.forEach((up) => {
         if (typeof state.upgrades[up.id] !== "number") {
           state.upgrades[up.id] = 0;
         }
       });
-
-      achievementsConfig.forEach(ach => {
+      achievementsConfig.forEach((ach) => {
         if (typeof state.achievements[ach.id] !== "boolean") {
           state.achievements[ach.id] = false;
         }
@@ -310,50 +428,37 @@ function loadState() {
 
       const now = Date.now();
 
-      // 🔮 Offline / idle catch-up
+      // Offline / idle catch-up
       if (state.lastSave) {
         const elapsedMs = now - state.lastSave;
         if (elapsedMs > 0) {
-          // Optional cap: max 12 hours of offline gains
-          const cappedMs = Math.min(elapsedMs, 12 * 60 * 60 * 1000);
+          const cappedMs = Math.min(elapsedMs, 12 * 60 * 60 * 1000); // 12h cap
           const elapsedSeconds = cappedMs / 1000;
-
-          // Base passive mana from manaRate
-          const baseManaGained = state.manaRate * elapsedSeconds;
-
-          // Passive effects from upgrades while offline
-          const carpetLevel = getUpgradeLevel("magic_carpet");
-          const moonLevel = getUpgradeLevel("moon_ritual");
-
-          let scrollGained = 0;
-          if (carpetLevel > 0) {
-            scrollGained += carpetLevel * 0.05 * elapsedSeconds;
+          const manaGained = state.manaRate * elapsedSeconds * getManaMultiplier();
+          if (manaGained > 0) {
+            gainMana(manaGained, { fromOffline: true, fromPassive: true });
+            addLogEntry(
+              `While you were away, your tower gathered ~${Math.floor(
+                manaGained
+              )} mana.`,
+              "⏳"
+            );
           }
-
-          // Assume half of offline time is "night-ish" if user uses night mode a lot,
-          // but we can bias by their saved timeOfDay
-          let nightFactor = 0.4;
-          if (state.timeOfDay === "night") nightFactor = 0.9;
-          else if (state.timeOfDay === "evening") nightFactor = 0.6;
-          const moonBonus = moonLevel > 0 ? state.manaRate * 0.3 * moonLevel * elapsedSeconds * nightFactor : 0;
-
-          state.mana += baseManaGained + moonBonus;
-          state.scrolls += scrollGained;
         }
       }
 
       state.lastSave = now;
       applySavedSettings();
     } else {
-      // First run: initialize upgrades & achievements
-      upgradesConfig.forEach(up => {
+      // Fresh run: init upgrades & achievements
+      upgradesConfig.forEach((up) => {
         state.upgrades[up.id] = 0;
       });
-      achievementsConfig.forEach(ach => {
+      achievementsConfig.forEach((ach) => {
         state.achievements[ach.id] = false;
       });
-
       state.lastSave = Date.now();
+      addLogEntry("You arrive at your cozy tower for the first time.", "✨");
     }
   } catch (e) {
     console.warn("Failed to load state:", e);
@@ -370,67 +475,262 @@ function saveState() {
 }
 
 function applySavedSettings() {
-  if (candleSlider) {
-    candleSlider.value = state.candleCount;
-  }
-  if (candleCountEl) {
-    candleCountEl.textContent = state.candleCount;
-  }
-  if (soundToggle) {
-    soundToggle.checked = state.soundEnabled;
-  }
-  if (particlesToggle) {
-    particlesToggle.checked = state.particlesEnabled;
-  }
+  if (candleSlider) candleSlider.value = state.candleCount;
+  if (candleCountEl) candleCountEl.textContent = state.candleCount;
+  if (soundToggle) soundToggle.checked = state.soundEnabled;
+  if (particlesToggle) particlesToggle.checked = state.particlesEnabled;
 
-  document.querySelectorAll("[data-time]").forEach(btn => {
+  document.querySelectorAll("[data-time]").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.time === state.timeOfDay);
   });
 
   updateUIThemeForTime();
+  renderTowerLog();
 }
 
-// Game Loop
+/* ------------ Daily Quest System ------------ */
+
+function ensureDailyQuest() {
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+  if (state.lastQuestDate === today && state.dailyQuest) {
+    updateQuestUI();
+    return;
+  }
+
+  // New day → new quest
+  state.lastQuestDate = today;
+
+  const types = ["mana", "clicks", "books", "scrolls"];
+  const chosen = types[Math.floor(Math.random() * types.length)];
+
+  let quest = {
+    id: `${today}-${chosen}`,
+    type: chosen,
+    title: "",
+    description: "",
+    target: 0,
+    baseline: 0,
+    rewardMana: 0,
+    rewardScrolls: 0,
+    rewardCozy: 0,
+    completed: false,
+    claimed: false
+  };
+
+  switch (chosen) {
+    case "mana":
+      quest.title = "Gather Mana Gently";
+      quest.description = "Let your tower quietly collect mana for you.";
+      quest.target = 300 + Math.floor(Math.random() * 250);
+      quest.baseline = state.totalManaEarned;
+      quest.rewardMana = Math.floor(quest.target * 0.4);
+      quest.rewardScrolls = 5;
+      quest.rewardCozy = 4;
+      break;
+    case "clicks":
+      quest.title = "Tend the Candles";
+      quest.description = "Spend a few moments clicking cozy candle flames.";
+      quest.target = 40 + Math.floor(Math.random() * 35);
+      quest.baseline = state.totalClicks;
+      quest.rewardMana = 120;
+      quest.rewardScrolls = 6;
+      quest.rewardCozy = 6;
+      break;
+    case "books":
+      quest.title = "Study Session";
+      quest.description = "Flip through some pages of your tomes.";
+      quest.target = 3 + Math.floor(Math.random() * 3);
+      quest.baseline = state.booksRead;
+      quest.rewardMana = 160;
+      quest.rewardScrolls = 12;
+      quest.rewardCozy = 8;
+      break;
+    case "scrolls":
+      quest.title = "Scroll Collector";
+      quest.description = "Let the winds and windows bring you scrolls.";
+      quest.target = 40 + Math.floor(Math.random() * 40);
+      quest.baseline = state.totalScrollsEarned;
+      quest.rewardMana = 140;
+      quest.rewardScrolls = 10;
+      quest.rewardCozy = 6;
+      break;
+  }
+
+  state.dailyQuest = quest;
+  addLogEntry(`A new focus appears: "${quest.title}".`, "🎯");
+  updateQuestUI();
+  saveState();
+}
+
+function getQuestProgress(quest) {
+  if (!quest) return { progress: 0, pct: 0 };
+  let currentVal = 0;
+
+  switch (quest.type) {
+    case "mana":
+      currentVal = state.totalManaEarned;
+      break;
+    case "clicks":
+      currentVal = state.totalClicks;
+      break;
+    case "books":
+      currentVal = state.booksRead;
+      break;
+    case "scrolls":
+      currentVal = state.totalScrollsEarned;
+      break;
+  }
+
+  const delta = Math.max(0, currentVal - quest.baseline);
+  const progress = Math.min(delta, quest.target);
+  const pct = quest.target > 0 ? (progress / quest.target) * 100 : 0;
+
+  return { progress, pct };
+}
+
+function updateQuestProgressAndState() {
+  const quest = state.dailyQuest;
+  if (!quest) return;
+
+  const { progress } = getQuestProgress(quest);
+  if (!quest.completed && progress >= quest.target) {
+    quest.completed = true;
+    addLogEntry(`You completed: "${quest.title}".`, "🎉");
+    showToast(`Quest complete: ${quest.title}`, "🎯");
+  }
+
+  updateQuestUI();
+}
+
+function updateQuestUI() {
+  const quest = state.dailyQuest;
+  if (!quest || !questTitleEl) return;
+
+  questTitleEl.textContent = quest.title || "Tonight’s Focus";
+  if (questDescriptionEl) {
+    questDescriptionEl.textContent =
+      quest.description || "Do a little something in your tower.";
+  }
+
+  const { progress, pct } = getQuestProgress(quest);
+  if (questProgressTextEl) {
+    questProgressTextEl.textContent = `${Math.floor(
+      progress
+    )} / ${quest.target}`;
+  }
+
+  if (questProgressBarInner) {
+    questProgressBarInner.style.width = `${pct}%`;
+  }
+
+  if (questRewardTextEl) {
+    questRewardTextEl.textContent = `Reward: +${quest.rewardMana} mana, +${quest.rewardScrolls} scrolls, +${quest.rewardCozy} cozy`;
+  }
+
+  if (questClaimBtn) {
+    questClaimBtn.disabled = !quest.completed || quest.claimed;
+    questClaimBtn.textContent = quest.claimed ? "Claimed" : "Claim";
+  }
+}
+
+function claimDailyQuestReward() {
+  const quest = state.dailyQuest;
+  if (!quest || !quest.completed || quest.claimed) return;
+
+  gainMana(quest.rewardMana);
+  gainScrolls(quest.rewardScrolls);
+  state.cozyScore += quest.rewardCozy;
+  quest.claimed = true;
+
+  addLogEntry(`You claimed rewards for "${quest.title}".`, "🎁");
+  showToast("Quest rewards claimed!", "🎁");
+
+  updateQuestUI();
+  updateDisplay();
+  saveState();
+}
+
+/* ------------ Game Loop ------------ */
+
 function gameLoop() {
-  // Generate mana (manaRate is per second; loop is 10x/sec)
-  state.mana += state.manaRate / 10;
+  // Passive mana generation (manaRate per sec * multiplier)
+  const manaPerTick = (state.manaRate * getManaMultiplier()) / 10;
+  gainMana(manaPerTick, { fromPassive: true });
 
-  // Passive scroll gain from Magic Carpet
-  const carpetLevel = getUpgradeLevel("magic_carpet");
-  if (carpetLevel > 0) {
-    state.scrolls += carpetLevel * 0.05; // ~0.5 scroll/sec at lv10
+  // Flying Carpet passive scroll income
+  const carpetLevel = state.upgrades["magic_carpet"] || 0;
+  if (carpetLevel > 0 && Math.random() < 0.01 * carpetLevel) {
+    const scrollGain = 1 + Math.floor(carpetLevel / 2);
+    gainScrolls(scrollGain);
+    showClickFeedback(window.innerWidth / 2, window.innerHeight * 0.3, `+${scrollGain} 📜`);
   }
 
-  // Extra night-time mana from Moon Ritual (scales with level & manaRate)
-  const moonLevel = getUpgradeLevel("moon_ritual");
-  if (moonLevel > 0 && state.timeOfDay === "night") {
-    state.mana += (state.manaRate * 0.3 * moonLevel) / 10;
-  }
+  // Track playtime
+  state.playTimeSeconds += 0.1;
 
   // Auto-save every 5 seconds
   if (Date.now() - state.lastSave > 5000) {
     saveState();
   }
 
-  updateDisplay();
-  checkAchievements();
-
-  // 💡 Refresh upgrades a few times per second so buttons unlock as soon as you can afford them
   uiTick++;
+  if (uiTick % 10 === 0) {
+    // Once per second-ish
+    updateDisplay();
+    updateMetaDisplay();
+  }
+
+  // Refresh upgrades state a few times per second
   if (uiTick % 2 === 0) {
     renderUpgrades();
   }
+
+  // Achievements & quest progress
+  checkAchievements();
+  updateQuestProgressAndState();
 }
 
-// Display Updates
+/* ------------ Display & UI Updates ------------ */
+
 function updateDisplay() {
   if (manaAmountEl) manaAmountEl.textContent = Math.floor(state.mana);
-  if (scrollsAmountEl) scrollsAmountEl.textContent = Math.floor(state.scrolls);
-  if (manaRateEl) manaRateEl.textContent = state.manaRate.toFixed(1) + " / sec";
+  if (scrollsAmountEl) scrollsAmountEl.textContent = state.scrolls;
+  if (manaRateEl) {
+    manaRateEl.textContent = `${state.manaRate.toFixed(1)} / sec`;
+  }
   if (wisdomLevelEl) wisdomLevelEl.textContent = state.wisdomLevel;
   if (cozyScoreEl) cozyScoreEl.textContent = state.cozyScore;
 
   updateCozyGlow();
+}
+
+function updateMetaDisplay() {
+  if (towerRankLabel) {
+    towerRankLabel.textContent = state.towerRank;
+  }
+  if (manaMultiplierEl) {
+    manaMultiplierEl.textContent = `×${getManaMultiplier().toFixed(2)}`;
+  }
+  if (playtimeLabel) {
+    const total = Math.floor(state.playTimeSeconds);
+    const minutes = Math.floor(total / 60);
+    const seconds = total % 60;
+    playtimeLabel.textContent = `${minutes}:${seconds
+      .toString()
+      .padStart(2, "0")}`;
+  }
+}
+
+function renderTowerLog() {
+  if (!logListEl || !state.towerLog) return;
+  logListEl.innerHTML = "";
+  state.towerLog.forEach((entry) => {
+    const li = document.createElement("li");
+    li.className = "log-entry";
+    li.innerHTML = `<span class="log-emoji">${entry.emoji}</span><span class="log-text">${entry.text}</span>`;
+    logListEl.appendChild(li);
+  });
 }
 
 function showClickFeedback(x, y, text) {
@@ -446,12 +746,13 @@ function showClickFeedback(x, y, text) {
   }, 10);
 }
 
-// Upgrades
+/* ------------ Upgrades ------------ */
+
 function renderUpgrades() {
   if (!upgradesListEl) return;
   upgradesListEl.innerHTML = "";
 
-  upgradesConfig.forEach(upgrade => {
+  upgradesConfig.forEach((upgrade) => {
     const level = state.upgrades[upgrade.id] || 0;
     const cost = Math.floor(
       upgrade.baseCost * Math.pow(upgrade.costMult, level)
@@ -463,10 +764,11 @@ function renderUpgrades() {
 
     const item = document.createElement("div");
     item.classList.add("upgrade-item");
+    item.classList.add(`upgrade-${upgrade.category || "general"}`);
     if (!canAfford) {
       item.classList.add("locked");
     } else {
-      item.classList.add("affordable"); // for glow styling
+      item.classList.add("affordable");
     }
 
     item.innerHTML = `
@@ -486,13 +788,13 @@ function renderUpgrades() {
     `;
 
     const btn = item.querySelector(".upgrade-btn");
-    btn.addEventListener("click", e => {
+    btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      const affordable =
+      const stillAffordable =
         upgrade.costType === "mana"
           ? state.mana >= cost
           : state.scrolls >= cost;
-      if (affordable) {
+      if (stillAffordable) {
         purchaseUpgrade(upgrade, cost);
       }
     });
@@ -512,10 +814,11 @@ function purchaseUpgrade(upgrade, cost) {
   upgrade.effect();
 
   playSfx(candleSfx);
+  showToast(`Upgraded: ${upgrade.name}`, "✨");
 
   // Celebration particles from center
   if (state.particlesEnabled && canvasWidth && canvasHeight) {
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 24; i++) {
       particles.push(new Particle(canvasWidth / 2, canvasHeight / 2, true));
     }
   }
@@ -525,17 +828,24 @@ function purchaseUpgrade(upgrade, cost) {
   updateDisplay();
 }
 
-// Achievements
+/* ------------ Achievements ------------ */
+
 function checkAchievements() {
   let newUnlock = false;
   const newlyUnlockedIds = [];
 
-  achievementsConfig.forEach(ach => {
+  achievementsConfig.forEach((ach) => {
     if (!state.achievements[ach.id] && ach.check()) {
       state.achievements[ach.id] = true;
       newUnlock = true;
       newlyUnlockedIds.push(ach.id);
       state.cozyScore += 5;
+
+      const meta = achievementsConfig.find((a) => a.id === ach.id);
+      if (meta) {
+        addLogEntry(`Achievement unlocked: ${meta.name}`, "🏆");
+        showToast(`Achievement: ${meta.name}`, "🏆");
+      }
     }
   });
 
@@ -550,7 +860,7 @@ function renderAchievements() {
   if (!achievementsListEl) return;
   achievementsListEl.innerHTML = "";
 
-  achievementsConfig.forEach(ach => {
+  achievementsConfig.forEach((ach) => {
     const unlocked = state.achievements[ach.id];
 
     const item = document.createElement("div");
@@ -570,18 +880,21 @@ function renderAchievements() {
 }
 
 function highlightNewAchievements(ids) {
-  // let the DOM paint first so animation always triggers
   requestAnimationFrame(() => {
-    ids.forEach(id => {
-      const el = document.querySelector(`[data-achievement-id="${id}"]`);
+    ids.forEach((id) => {
+      const el = document.querySelector(
+        `[data-achievement-id="${id}"]`
+      );
       if (!el) return;
       el.classList.add("just-unlocked");
       setTimeout(() => {
         el.classList.remove("just-unlocked");
-      }, 800);
+      }, 900);
     });
   });
 }
+
+/* ------------ Cozy Glow overlay ------------ */
 
 function updateCozyGlow() {
   if (!overlayUI) return;
@@ -597,16 +910,14 @@ function updateCozyGlow() {
   }
 }
 
-// Canvas Setup
+/* ------------ Canvas Setup ------------ */
+
 function setupCanvas() {
   canvas = document.getElementById("towerCanvas");
   if (!canvas) return;
   ctx = canvas.getContext("2d");
   resizeCanvas();
-  window.addEventListener("resize", () => {
-    resizeCanvas();
-    updateCandles();
-  });
+  window.addEventListener("resize", resizeCanvas);
   updateCandles();
 }
 
@@ -614,45 +925,39 @@ function resizeCanvas() {
   if (!canvas) return;
   canvasWidth = canvas.width = window.innerWidth;
   canvasHeight = canvas.height = window.innerHeight;
+  updateClickableZones();
 }
 
-// Candles now float around the tower in an orbit
 function updateCandles() {
+  // Orbiting candles around the tower
   candleFlames = [];
-  if (!canvasWidth || !canvasHeight) return;
 
+  const count = Math.max(1, state.candleCount);
   const centerX = canvasWidth / 2;
   const baseY = canvasHeight;
   const towerHeight = canvasHeight * 0.75;
-  const towerWidth = Math.min(350, canvasWidth * 0.45);
-  const midY = baseY - towerHeight * 0.45;
-
-  const radiusX = towerWidth * 0.75;
-  const radiusY = towerHeight * 0.28;
-
-  const count = Math.max(1, state.candleCount);
+  const orbitCenterY = baseY - towerHeight * 0.45;
+  const baseRadius = Math.min(260, canvasWidth * 0.4);
 
   for (let i = 0; i < count; i++) {
-    // Spread them mostly around the front & sides (not directly behind)
-    const baseAngle = Math.PI * 0.2 + (i / count) * Math.PI * 1.2;
+    const angle = (Math.PI * 2 * i) / count;
     candleFlames.push({
-      angle: baseAngle,
-      radiusX,
-      radiusY,
-      centerX,
-      centerY: midY,
-      speed: 0.0006 + Math.random() * 0.0008,
-      phase: Math.random() * Math.PI * 2,
+      angle,
+      radius: baseRadius * (0.75 + Math.random() * 0.2),
+      heightOffset: (Math.random() - 0.5) * 20,
+      wobbleSpeed: 0.001 + Math.random() * 0.0015,
+      orbitSpeed: 0.00045 + Math.random() * 0.0006,
       x: centerX,
-      y: midY
+      y: orbitCenterY
     });
   }
+
+  updateClickableZones();
 }
 
-// Compute clickable zones each frame based on current positions
 function updateClickableZones() {
-  // Candle zones - generous for touch
-  clickableZones.candles = candleFlames.map(candle => ({
+  // Candle zones - generous for touch; updated per frame from drawCandles
+  clickableZones.candles = candleFlames.map((candle) => ({
     x: candle.x - 40,
     y: candle.y - 100,
     width: 80,
@@ -686,76 +991,83 @@ function updateClickableZones() {
   };
 }
 
-// Event Listeners
+/* ------------ Event Listeners ------------ */
+
 function setupEventListeners() {
   if (canvas) {
     canvas.addEventListener("click", handleCanvasClick);
   }
 
-  // Dismiss welcome
-  if (dismissWelcome && welcomeCard) {
+  if (dismissWelcome) {
     dismissWelcome.addEventListener("click", () => {
-      welcomeCard.classList.add("hidden");
+      welcomeCard?.classList.add("hidden");
       state.totalClicks++;
       saveState();
     });
   }
 
-  // Ambiance controls (time of day)
-  document.querySelectorAll("[data-time]").forEach(btn => {
-    btn.addEventListener("click", e => {
+  // Time of day buttons
+  document.querySelectorAll("[data-time]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
       document
         .querySelectorAll("[data-time]")
-        .forEach(b => b.classList.remove("active"));
+        .forEach((b) => b.classList.remove("active"));
       e.target.classList.add("active");
       state.timeOfDay = e.target.dataset.time;
       updateUIThemeForTime();
       saveState();
+      if (state.timeOfDay === "night") {
+        // helps unlock night_owl achievement
+        addLogEntry("You settle in for a late night in the tower.", "🌙");
+      }
     });
   });
 
-  if (candleSlider && candleCountEl) {
-    candleSlider.addEventListener("input", e => {
+  if (candleSlider) {
+    candleSlider.addEventListener("input", (e) => {
       state.candleCount = parseInt(e.target.value, 10);
-      candleCountEl.textContent = state.candleCount;
+      if (candleCountEl) {
+        candleCountEl.textContent = state.candleCount;
+      }
       updateCandles();
       saveState();
     });
   }
 
   if (soundToggle) {
-    soundToggle.addEventListener("change", e => {
+    soundToggle.addEventListener("change", (e) => {
       state.soundEnabled = e.target.checked;
       saveState();
     });
   }
 
   if (particlesToggle) {
-    particlesToggle.addEventListener("change", e => {
+    particlesToggle.addEventListener("change", (e) => {
       state.particlesEnabled = e.target.checked;
       saveState();
     });
   }
 
   // Book modal
-  if (closeBookModal && bookModal) {
+  if (closeBookModal) {
     closeBookModal.addEventListener("click", () => {
-      bookModal.classList.remove("active");
+      bookModal?.classList.remove("active");
     });
+  }
 
-    bookModal.addEventListener("click", e => {
+  if (bookModal) {
+    bookModal.addEventListener("click", (e) => {
       if (e.target === bookModal) {
         bookModal.classList.remove("active");
       }
     });
   }
 
-  // Reset button
   if (resetBtn) {
     resetBtn.addEventListener("click", () => {
       if (
         confirm(
-          "Are you sure you want to reset your tower? This cannot be undone!"
+          "Are you sure you want to reset your tower? This will erase all progress."
         )
       ) {
         localStorage.removeItem(STATE_KEY);
@@ -763,10 +1075,33 @@ function setupEventListeners() {
       }
     });
   }
+
+  // Quest claim button
+  if (questClaimBtn) {
+    questClaimBtn.addEventListener("click", () => {
+      claimDailyQuestReward();
+    });
+  }
+
+  // Tabs
+  const tabButtons = document.querySelectorAll(".tab-btn");
+  const tabContents = document.querySelectorAll(".tab-content");
+  tabButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const targetId = btn.getAttribute("data-tab-target");
+      if (!targetId) return;
+
+      tabButtons.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      tabContents.forEach((content) => {
+        content.classList.toggle("active", content.id === targetId);
+      });
+    });
+  });
 }
 
 function handleCanvasClick(e) {
-  if (!canvas) return;
   const rect = canvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
@@ -794,7 +1129,7 @@ function handleCanvasClick(e) {
     y >= bookZone.y &&
     y <= bookZone.y + bookZone.height
   ) {
-    handleBookClick(e.clientX, e.clientY);
+    handleBookClick();
   }
 
   // Window click
@@ -813,19 +1148,18 @@ function handleCanvasClick(e) {
 }
 
 function handleCandleClick(candle, screenX, screenY) {
-  // Scale mana gain with wisdom and cozy score so upgrades feel meaningful
-  const base = 5 + state.wisdomLevel;
-  const cozyBoost = 1 + state.cozyScore / 100; // up to +100% at 100 cozy
-  const wisdomBoost = 1 + (state.wisdomLevel - 1) * 0.05; // +5% per wisdom level after 1
-  const manaGain = Math.round(base * cozyBoost * wisdomBoost);
-
-  state.mana += manaGain;
+  const baseGain = 5 + state.wisdomLevel;
+  const totalGain = baseGain * getManaMultiplier();
+  gainMana(totalGain);
 
   playSfx(candleSfx);
 
-  showClickFeedback(screenX, screenY, `+${manaGain} ✨`);
+  showClickFeedback(
+    screenX,
+    screenY,
+    `+${Math.floor(totalGain)} ✨`
+  );
 
-  // Spawn particles
   if (state.particlesEnabled && candle) {
     for (let i = 0; i < 8; i++) {
       particles.push(new Particle(candle.x, candle.y - 30, false));
@@ -838,25 +1172,19 @@ function handleCandleClick(candle, screenX, screenY) {
 function handleBookClick() {
   state.booksRead++;
   state.wisdomLevel++;
-  state.scrolls += 10;
-
-  // Every 5 books, a little extra permanent manaRate bonus to feel like progress
-  if (state.booksRead % 5 === 0) {
-    state.manaRate += 0.2;
-    state.cozyScore += 3;
-  }
+  gainScrolls(10);
 
   playSfx(bookSfx);
 
-  // Show book modal with random quote
-  if (bookTextEl && bookModal) {
-    const quote =
-      wisdomQuotes[Math.floor(Math.random() * wisdomQuotes.length)];
+  const quote =
+    wisdomQuotes[Math.floor(Math.random() * wisdomQuotes.length)];
+  if (bookTextEl) {
     bookTextEl.innerHTML = `<p>"${quote}"</p>`;
+  }
+  if (bookModal) {
     bookModal.classList.add("active");
   }
 
-  // Particles from book
   if (state.particlesEnabled) {
     const centerX = canvasWidth / 2 - 40;
     const roomY = canvasHeight * 0.65;
@@ -866,26 +1194,20 @@ function handleBookClick() {
     }
   }
 
+  addLogEntry("You study an ancient page.", "📖");
+
   updateDisplay();
   saveState();
 }
 
 function handleWindowClick(screenX, screenY) {
-  const baseScroll = 3;
-  const moonLevel = getUpgradeLevel("moon_ritual");
-  const timeBonus =
-    state.timeOfDay === "night" || state.timeOfDay === "evening"
-      ? 1 + moonLevel * 0.15
-      : 1;
-  const scrollGain = Math.round(baseScroll * timeBonus);
-
-  state.scrolls += scrollGain;
+  const scrollGain = 3;
+  gainScrolls(scrollGain);
 
   playSfx(windowSfx);
 
   showClickFeedback(screenX, screenY, `+${scrollGain} 📜`);
 
-  // Particles from window center
   if (state.particlesEnabled) {
     const centerX = canvasWidth / 2;
     const baseY = canvasHeight;
@@ -901,7 +1223,8 @@ function handleWindowClick(screenX, screenY) {
   updateDisplay();
 }
 
-// Particle Class
+/* ------------ Particle Class ------------ */
+
 class Particle {
   constructor(x, y, celebrate = false) {
     this.x = x;
@@ -943,7 +1266,8 @@ class Particle {
   }
 }
 
-// Color schemes
+/* ------------ Color/Theme helpers ------------ */
+
 function getTimeColors() {
   const colors = {
     evening: {
@@ -965,11 +1289,10 @@ function getTimeColors() {
   return colors[state.timeOfDay] || colors.evening;
 }
 
-// UI theme updater for stat cards & subtle header/footer tint
 function updateUIThemeForTime() {
   const theme = uiThemes[state.timeOfDay] || uiThemes.evening;
   const statCards = document.querySelectorAll(".stat-card");
-  statCards.forEach(card => {
+  statCards.forEach((card) => {
     card.style.background = theme.cardBg;
     card.style.borderColor = theme.cardBorder;
     card.style.boxShadow = theme.cardShadow;
@@ -987,7 +1310,7 @@ function updateUIThemeForTime() {
   }
 }
 
-// Drawing functions
+/* ------------ Drawing ------------ */
 
 function drawBackground() {
   const timeColors = getTimeColors();
@@ -1017,13 +1340,21 @@ function drawStars() {
     for (let i = 0; i < starCount; i++) {
       const x = (i * 137.508) % canvasWidth;
       const y = (i * 197.508) % (canvasHeight * 0.6);
-      const twinkle = Math.sin(time * 0.002 + i * 0.5) * 0.5 + 0.5;
+      const twinkle =
+        Math.sin(time * 0.002 + i * 0.5) * 0.5 + 0.5;
       const size = (Math.sin(i) * 0.5 + 1) * 1.5;
 
       ctx.save();
       ctx.globalAlpha = twinkle * timeColors.stars * 0.8;
 
-      const starGlow = ctx.createRadialGradient(x, y, 0, x, y, size * 3);
+      const starGlow = ctx.createRadialGradient(
+        x,
+        y,
+        0,
+        x,
+        y,
+        size * 3
+      );
       starGlow.addColorStop(0, "rgba(255, 255, 255, 1)");
       starGlow.addColorStop(0.3, "rgba(255, 255, 255, 0.6)");
       starGlow.addColorStop(1, "rgba(255, 255, 255, 0)");
@@ -1117,7 +1448,15 @@ function drawTower() {
   ctx.fillStyle = "#000000";
   ctx.filter = "blur(30px)";
   ctx.beginPath();
-  ctx.ellipse(centerX, baseY - 20, towerWidth * 0.6, 40, 0, 0, Math.PI * 2);
+  ctx.ellipse(
+    centerX,
+    baseY - 20,
+    towerWidth * 0.6,
+    40,
+    0,
+    0,
+    Math.PI * 2
+  );
   ctx.fill();
   ctx.restore();
 
@@ -1298,7 +1637,12 @@ function drawStudyRoom() {
   const deskWidth = Math.min(280, canvasWidth * 0.35);
 
   // Desk
-  const deskGradient = ctx.createLinearGradient(0, roomY, 0, roomY + 60);
+  const deskGradient = ctx.createLinearGradient(
+    0,
+    roomY,
+    0,
+    roomY + 60
+  );
   deskGradient.addColorStop(0, "#6b4a32");
   deskGradient.addColorStop(0.3, "#5d3f2a");
   deskGradient.addColorStop(1, "#3d2818");
@@ -1355,13 +1699,7 @@ function drawStudyRoom() {
   // Left page
   ctx.fillStyle = "#f9f3e8";
   ctx.beginPath();
-  ctx.roundRect(
-    centerX - 85,
-    bookY - 10,
-    80,
-    60,
-    [4, 0, 0, 4]
-  );
+  ctx.roundRect(centerX - 85, bookY - 10, 80, 60, [4, 0, 0, 4]);
   ctx.fill();
   ctx.strokeStyle = "rgba(139, 106, 79, 0.2)";
   ctx.lineWidth = 1;
@@ -1467,16 +1805,18 @@ function drawStudyRoom() {
 }
 
 function drawCandles() {
-  if (!candleFlames.length) return;
+  const centerX = canvasWidth / 2;
+  const baseY = canvasHeight;
+  const towerHeight = canvasHeight * 0.75;
+  const orbitCenterY = baseY - towerHeight * 0.45;
 
   candleFlames.forEach((candle, index) => {
-    const orbitAngle =
-      candle.angle + time * candle.speed + candle.phase;
+    const orbitAngle = candle.angle + time * candle.orbitSpeed;
+    const wobble =
+      Math.sin(time * candle.wobbleSpeed + index) * 10;
 
-    const x =
-      candle.centerX + Math.cos(orbitAngle) * candle.radiusX;
-    const y =
-      candle.centerY + Math.sin(orbitAngle) * candle.radiusY;
+    const x = centerX + Math.cos(orbitAngle) * candle.radius;
+    const y = orbitCenterY + candle.heightOffset + wobble;
 
     candle.x = x;
     candle.y = y;
@@ -1590,7 +1930,7 @@ function drawCandles() {
     ctx.globalAlpha = 1;
 
     // Smoke particles
-    if (state.particlesEnabled && Math.random() < 0.15) {
+    if (state.particlesEnabled && Math.random() < 0.12) {
       particles.push(
         new Particle(
           candle.x + (Math.random() - 0.5) * 6,
@@ -1599,9 +1939,11 @@ function drawCandles() {
       );
     }
   });
+
+  // Update clickable zones based on new candle positions
+  updateClickableZones();
 }
 
-// Vignette that responds to cozyScore
 function drawVignette() {
   const centerX = canvasWidth / 2;
   const centerY = canvasHeight * 0.65;
@@ -1621,13 +1963,19 @@ function drawVignette() {
     centerY,
     radius
   );
-  darkGrad.addColorStop(0, `rgba(0, 0, 0, ${0.2 * (1 - t)})`);
-  darkGrad.addColorStop(1, `rgba(0, 0, 0, ${0.75 + 0.1 * t})`);
+  darkGrad.addColorStop(
+    0,
+    `rgba(0, 0, 0, ${0.2 * (1 - t)})`
+  );
+  darkGrad.addColorStop(
+    1,
+    `rgba(0, 0, 0, ${0.75 + 0.1 * t})`
+  );
   ctx.fillStyle = darkGrad;
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
   ctx.restore();
 
-  // Warm inner glow (stronger with cozyScore)
+  // Warm inner glow
   ctx.save();
   ctx.globalAlpha = 0.25 * t;
   const warmGrad = ctx.createRadialGradient(
@@ -1657,8 +2005,8 @@ function drawParticles() {
     return;
   }
 
-  particles = particles.filter(p => !p.isDead());
-  particles.forEach(p => {
+  particles = particles.filter((p) => !p.isDead());
+  particles.forEach((p) => {
     p.update();
 
     ctx.save();
@@ -1691,20 +2039,12 @@ function drawParticles() {
   });
 }
 
-window.addEventListener("beforeunload", () => {
-  try {
-    saveState();
-  } catch (e) {
-    console.warn("Failed to save on unload:", e);
-  }
-});
+/* ------------ Animation Loop ------------ */
 
-// Animation loop
 function animate() {
-  if (!ctx) return;
-
   time++;
 
+  if (!ctx) return;
   drawBackground();
   drawStars();
   drawMoon();
@@ -1715,24 +2055,52 @@ function animate() {
   drawVignette();
   drawParticles();
 
-  // Keep clickable zones aligned with moving candles & static elements
-  updateClickableZones();
-
   requestAnimationFrame(animate);
 }
 
-// Initialize
+/* ------------ Init & Service Worker ------------ */
+
+function init() {
+  loadState();
+  setupCanvas();
+  setupAudio();
+  setupEventListeners();
+  updateDisplay();
+  renderUpgrades();
+  renderAchievements();
+  updateUIThemeForTime();
+  ensureDailyQuest();
+  updateMetaDisplay();
+
+  if (state.totalClicks === 0) {
+    welcomeCard?.classList.remove("hidden");
+  } else {
+    welcomeCard?.classList.add("hidden");
+  }
+
+  setInterval(gameLoop, 100);
+  animate();
+}
+
+window.addEventListener("beforeunload", () => {
+  try {
+    saveState();
+  } catch (e) {
+    console.warn("Failed to save on unload:", e);
+  }
+});
+
 window.addEventListener("load", init);
 
-// 🔧 Register service worker for offline support
+// Service worker for offline support
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
       .register("./service-worker.js")
-      .then(reg => {
+      .then((reg) => {
         console.log("ServiceWorker registered:", reg.scope);
       })
-      .catch(err => {
+      .catch((err) => {
         console.log("ServiceWorker registration failed:", err);
       });
   });
