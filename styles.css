@@ -1,17 +1,18 @@
-/* Global reset */
+/* =============== GLOBAL RESET =============== */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-/* Base layout */
+/* =============== BASE LAYOUT =============== */
+
 body {
   font-family: 'Georgia', 'Times New Roman', serif;
   background: #0a0604;
   color: #f4e4c8;
-  overflow-y: auto;          /* allow scrolling */
-  height: auto;              /* let content define height */
+  overflow-y: auto;
+  height: auto;
 }
 
 #app {
@@ -20,18 +21,18 @@ body {
   min-height: 100vh;
 }
 
-/* Canvas: tower at the top of the page */
+/* Canvas sits at the top as a hero section */
 #towerCanvas {
   display: block;
-  position: relative;        /* no overlay */
+  position: relative;
   top: 0;
   left: 0;
   width: 100%;
   height: auto;
-  z-index: 0;                /* sits in normal flow */
+  z-index: 0;
 }
 
-/* Overlay UI wrapper: now a normal page section under the tower */
+/* Overlay UI: full page content under the canvas */
 .overlay-ui {
   position: relative;
   z-index: 1;
@@ -40,7 +41,6 @@ body {
   pointer-events: auto;
   padding-bottom: 12px;
 
-  /* cozy glow tiers still apply */
   box-shadow: 0 0 0 0 rgba(255, 220, 160, 0);
   transition:
     box-shadow 0.35s ease,
@@ -48,7 +48,7 @@ body {
     background-color 0.35s ease;
 }
 
-/* Cozy glow tiers based on cozyScore */
+/* Cozy glow tiers */
 .overlay-ui.cozy-glow-1 {
   box-shadow:
     0 0 0 1px rgba(255, 220, 160, 0.2),
@@ -69,7 +69,7 @@ body {
     0 0 160px rgba(200, 150, 255, 0.45);
 }
 
-/* ----------------- HEADER ----------------- */
+/* =============== HEADER =============== */
 
 .app-header {
   padding: 14px 22px;
@@ -83,6 +83,7 @@ body {
   box-shadow:
     0 12px 30px rgba(0, 0, 0, 0.7),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  gap: 18px;
 }
 
 .tower-title h1 {
@@ -100,6 +101,15 @@ body {
   font-style: italic;
 }
 
+/* Right side of header: resources + tower meta */
+.header-metrics {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 /* Resources in header */
 .resources {
   display: flex;
@@ -113,7 +123,11 @@ body {
   gap: 6px;
   padding: 6px 10px;
   border-radius: 999px;
-  background: radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.08) 0, rgba(10, 6, 8, 0.7) 50%, rgba(10, 6, 8, 0.95) 100%);
+  background:
+    radial-gradient(circle at 0 0,
+      rgba(255, 255, 255, 0.08) 0,
+      rgba(10, 6, 8, 0.7) 50%,
+      rgba(10, 6, 8, 0.95) 100%);
   border: 1px solid rgba(190, 160, 110, 0.35);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65);
 }
@@ -128,7 +142,41 @@ body {
   color: #fbead0;
 }
 
-/* ----------------- MAIN CONTENT ----------------- */
+/* Tower meta (Rank, Mana Bonus, Session) */
+
+.tower-meta {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: radial-gradient(circle at top left, rgba(70, 40, 120, 0.35), rgba(10, 6, 10, 0.9));
+  border: 1px solid rgba(190, 160, 110, 0.35);
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 10px;
+  border-radius: 999px;
+  min-width: 80px;
+}
+
+.meta-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #bca48b;
+}
+
+.meta-value {
+  font-size: 0.95rem;
+  color: #fbead0;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+}
+
+/* =============== MAIN CONTENT LAYOUT =============== */
 
 .main-content {
   flex: 1;
@@ -154,12 +202,28 @@ body {
   border-radius: 4px;
 }
 
-/* Generic section containers */
+/* 2-column grid for main layout */
+.main-content.main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 18px;
+}
+
+.left-column,
+.right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Generic section containers used in left column & older layout */
 .upgrades-section,
 .ambiance-section,
-.achievements-section {
-  background: radial-gradient(circle at top left, rgba(120, 90, 170, 0.22), transparent 60%)
-    , linear-gradient(135deg, rgba(32, 20, 24, 0.92), rgba(26, 17, 20, 0.9));
+.achievements-section,
+.quest-section {
+  background:
+    radial-gradient(circle at top left, rgba(120, 90, 170, 0.22), transparent 60%),
+    linear-gradient(135deg, rgba(32, 20, 24, 0.92), rgba(26, 17, 20, 0.9));
   border-radius: 18px;
   padding: 18px 18px 16px;
   border: 1px solid rgba(190, 160, 110, 0.2);
@@ -170,7 +234,8 @@ body {
 
 .upgrades-section h2,
 .ambiance-section h2,
-.achievements-section h2 {
+.achievements-section h2,
+.quest-section h2 {
   font-size: 1.35rem;
   color: #f9e5b8;
   margin-bottom: 12px;
@@ -180,7 +245,13 @@ body {
   text-shadow: 0 0 12px rgba(255, 220, 160, 0.35);
 }
 
-/* ----------------- WELCOME CARD & HINTS ----------------- */
+.panel-subtitle {
+  font-size: 0.85rem;
+  color: #c9b299;
+  margin-bottom: 6px;
+}
+
+/* =============== WELCOME CARD & HINTS =============== */
 
 .welcome-card {
   background: radial-gradient(circle at top, rgba(180, 135, 90, 0.28), rgba(35, 20, 18, 0.95));
@@ -210,11 +281,12 @@ body {
 }
 
 /* Buttons */
-.btn-primary {
+
+.btn-primary,
+.btn-secondary {
   font-family: inherit;
   font-size: 0.95rem;
   padding: 10px 22px;
-  border: none;
   border-radius: 999px;
   cursor: pointer;
   display: inline-flex;
@@ -223,6 +295,10 @@ body {
   gap: 6px;
   transition: all 0.18s ease;
   font-weight: 600;
+  border: none;
+}
+
+.btn-primary {
   background: linear-gradient(135deg, #8b5a3c 0%, #c17a4a 100%);
   color: #ffffff;
   box-shadow:
@@ -244,6 +320,23 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.17);
 }
 
+.btn-secondary {
+  background: rgba(35, 24, 20, 0.9);
+  color: #f4dfa9;
+  border: 1px solid rgba(190, 160, 110, 0.55);
+  font-size: 0.9rem;
+  padding-block: 8px;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.btn-secondary:not(:disabled):hover {
+  background: rgba(60, 40, 28, 0.95);
+}
+
 /* Interaction hints */
 
 .interaction-hints {
@@ -258,7 +351,8 @@ body {
   gap: 8px;
   padding: 8px 11px;
   border-radius: 999px;
-  background: radial-gradient(circle at top left, rgba(140, 105, 190, 0.2), rgba(25, 16, 20, 0.9));
+  background:
+    radial-gradient(circle at top left, rgba(140, 105, 190, 0.2), rgba(25, 16, 20, 0.9));
   border: 1px solid rgba(190, 160, 110, 0.25);
   color: #ddc7aa;
   font-size: 0.9rem;
@@ -268,7 +362,7 @@ body {
   font-size: 1.1rem;
 }
 
-/* ----------------- STATS GRID ----------------- */
+/* =============== STATS GRID =============== */
 
 .stats-grid {
   display: grid;
@@ -318,7 +412,83 @@ body {
   color: #bca48b;
 }
 
-/* ----------------- UPGRADES ----------------- */
+/* =============== DAILY QUEST =============== */
+
+.quest-section {
+  position: relative;
+}
+
+.quest-card {
+  border-radius: 16px;
+  padding: 14px 14px 12px;
+  background:
+    radial-gradient(circle at top left, rgba(130, 100, 190, 0.18), rgba(28, 18, 26, 0.96));
+  border: 1px solid rgba(190, 160, 110, 0.4);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.quest-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.quest-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fbead0;
+}
+
+.quest-description {
+  font-size: 0.9rem;
+  color: #ddc7aa;
+  line-height: 1.5;
+}
+
+.quest-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.quest-progress-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(60, 40, 30, 0.9);
+  overflow: hidden;
+  border: 1px solid rgba(190, 160, 110, 0.4);
+}
+
+.quest-progress-bar-inner {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #d4a35a, #f6dd8d, #c58ad8);
+  box-shadow: 0 0 12px rgba(255, 220, 160, 0.7);
+  transition: width 0.25s ease-out;
+}
+
+.quest-progress-text {
+  font-size: 0.85rem;
+  color: #c9b299;
+}
+
+.quest-reward-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.quest-reward-text {
+  font-size: 0.85rem;
+  color: #f4dfa9;
+}
+
+/* =============== UPGRADES =============== */
 
 .upgrade-grid {
   display: grid;
@@ -393,7 +563,6 @@ body {
   gap: 4px;
 }
 
-/* Upgrade button */
 .upgrade-btn {
   font-family: inherit;
   font-size: 0.9rem;
@@ -419,7 +588,7 @@ body {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.8);
 }
 
-/* ----------------- AMBIANCE / SETTINGS ----------------- */
+/* =============== AMBIANCE / SETTINGS =============== */
 
 .ambiance-controls {
   display: grid;
@@ -467,7 +636,8 @@ body {
 }
 
 .ambiance-btn.active {
-  background: radial-gradient(circle at top left, rgba(200, 160, 110, 0.9), rgba(140, 90, 80, 0.9));
+  background:
+    radial-gradient(circle at top left, rgba(200, 160, 110, 0.9), rgba(140, 90, 80, 0.9));
   border-color: rgba(255, 220, 160, 0.9);
   color: #fff2d4;
   box-shadow:
@@ -521,7 +691,7 @@ body {
   accent-color: #c17a4a;
 }
 
-/* ----------------- ACHIEVEMENTS ----------------- */
+/* =============== ACHIEVEMENTS =============== */
 
 .achievements-grid {
   display: grid;
@@ -604,7 +774,116 @@ body {
   }
 }
 
-/* ----------------- FOOTER ----------------- */
+/* =============== TABS / RIGHT PANEL =============== */
+
+.tabs-panel {
+  border-radius: 18px;
+  border: 1px solid rgba(190, 160, 110, 0.25);
+  background:
+    radial-gradient(circle at top right, rgba(120, 90, 170, 0.25), transparent 60%),
+    linear-gradient(145deg, rgba(28, 18, 22, 0.96), rgba(18, 10, 14, 0.98));
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 360px;
+}
+
+.tab-bar {
+  display: flex;
+  padding: 8px;
+  gap: 6px;
+  background: rgba(10, 6, 12, 0.9);
+  border-bottom: 1px solid rgba(190, 160, 110, 0.3);
+}
+
+.tab-btn {
+  flex: 1 1 0;
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #ccb49d;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.tab-btn:hover {
+  background: rgba(40, 26, 32, 0.85);
+}
+
+.tab-btn.active {
+  background:
+    radial-gradient(circle at top left, rgba(200, 160, 110, 0.95), rgba(130, 90, 80, 0.95));
+  color: #fff2d4;
+  border-color: rgba(255, 220, 160, 0.9);
+  box-shadow:
+    0 0 14px rgba(255, 220, 160, 0.45),
+    0 4px 16px rgba(0, 0, 0, 0.75);
+}
+
+.tab-body {
+  padding: 14px 14px 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* =============== TOWER LOG =============== */
+
+.log-list {
+  list-style: none;
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.log-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.log-list::-webkit-scrollbar-thumb {
+  background: rgba(160, 120, 80, 0.5);
+  border-radius: 999px;
+}
+
+.log-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #ddc7aa;
+  padding: 4px 5px;
+  border-radius: 8px;
+  background: rgba(20, 12, 16, 0.8);
+}
+
+.log-emoji {
+  flex-shrink: 0;
+}
+
+.log-text {
+  flex: 1;
+}
+
+/* =============== FOOTER =============== */
 
 .app-footer {
   padding: 10px 20px;
@@ -639,7 +918,7 @@ body {
   border-color: rgba(220, 190, 140, 0.7);
 }
 
-/* ----------------- CLICK FEEDBACK ----------------- */
+/* =============== CLICK FEEDBACK =============== */
 
 .click-feedback {
   position: fixed;
@@ -666,7 +945,7 @@ body {
   }
 }
 
-/* ----------------- MODAL (BOOK) ----------------- */
+/* =============== MODAL (BOOK) =============== */
 
 .modal {
   display: none;
@@ -685,7 +964,8 @@ body {
 }
 
 .modal-content {
-  background: radial-gradient(circle at top left, rgba(150, 110, 70, 0.35), rgba(30, 18, 20, 0.96));
+  background:
+    radial-gradient(circle at top left, rgba(150, 110, 70, 0.35), rgba(30, 18, 20, 0.96));
   border-radius: 20px;
   border: 2px solid rgba(190, 160, 110, 0.55);
   padding: 26px 26px 20px;
@@ -754,15 +1034,77 @@ body {
   color: #ffffff;
 }
 
-/* ----------------- RESPONSIVE ----------------- */
+/* =============== TOASTS =============== */
+
+.toast-container {
+  position: fixed;
+  top: 14px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 250;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: radial-gradient(circle at top left, rgba(200, 160, 110, 0.95), rgba(120, 80, 60, 0.96));
+  color: #fff7e0;
+  font-size: 0.9rem;
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.85),
+    0 0 18px rgba(255, 220, 160, 0.55);
+  transform: translateY(-8px);
+  opacity: 0;
+  transition: opacity 0.18s ease-out, transform 0.18s ease-out;
+  pointer-events: auto;
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast-icon {
+  font-size: 1.1rem;
+}
+
+.toast-text {
+  white-space: nowrap;
+}
+
+/* =============== RESPONSIVE =============== */
+
+@media (max-width: 900px) {
+  .main-content.main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tabs-panel {
+    min-height: 0;
+  }
+}
 
 @media (max-width: 768px) {
   .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
     padding-inline: 16px;
   }
 
   .tower-title h1 {
     font-size: 1.4rem;
+  }
+
+  .header-metrics {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .resources {
@@ -779,7 +1121,8 @@ body {
 
   .upgrades-section,
   .ambiance-section,
-  .achievements-section {
+  .achievements-section,
+  .quest-section {
     padding-inline: 14px;
   }
 
@@ -799,5 +1142,15 @@ body {
 
   .app-footer {
     padding-inline: 14px;
+  }
+
+  .toast-container {
+    right: 10px;
+    left: 10px;
+    align-items: center;
+  }
+
+  .toast {
+    max-width: 100%;
   }
 }
