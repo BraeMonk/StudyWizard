@@ -1,9 +1,0 @@
-{
-  "name": "Study Wizard",
-  "short_name": "StudyWizard",
-  "start_url": "index.html",
-  "display": "standalone",
-  "background_color": "#f4eedc",
-  "theme_color": "#8a6f4d",
-  "icons": []
-}
