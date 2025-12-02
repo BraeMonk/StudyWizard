@@ -1,0 +1,1 @@
+const Prestige={activate(){const gained=Math.floor(Math.sqrt(Game.state.ink/100));Game.state.wisdom+=gained;Game.state.ink=0;}};

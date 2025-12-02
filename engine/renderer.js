@@ -1,0 +1,1 @@
+const Renderer={draw(dt){ctx.clearRect(0,0,canvas.width,canvas.height);Rooms.render(ctx,dt);Particles.render(ctx,dt);Familiars.render(ctx,dt);DragDrop.render(ctx,dt);Avatar.render(ctx,dt);UI.render(ctx,dt);}};

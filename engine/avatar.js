@@ -1,0 +1,1 @@
+const Avatar={img:null,x:300,y:300,init(){this.img=new Image();this.img.src='assets/ui/wizard.svg';},render(ctx){if(this.img.complete){ctx.drawImage(this.img,this.x,this.y,100,100);}}};

@@ -1,0 +1,1 @@
+const Idle={init(){setInterval(()=>{Game.state.ink+=1;},1000);}};

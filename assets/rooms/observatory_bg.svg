@@ -1,0 +1,14 @@
+
+<svg width='1024' height='768' xmlns='http://www.w3.org/2000/svg'>
+  <rect width='100%' height='100%' fill='#e8dfc9'/>
+  <g opacity='0.15'>
+    <circle cx='200' cy='150' r='120' fill='#d2c3a3'/>
+    <circle cx='800' cy='600' r='180' fill='#c5b89a'/>
+  </g>
+  <g>
+    <text x='50%' y='50%' text-anchor='middle' font-size='40' fill='#4a3f35'>Observatory Tower – BG</text>
+  </g>
+  <g stroke='#4a3f35' stroke-width='3' fill='none' opacity='0.5'>
+    <path d='M50 700 Q300 500 500 700 T950 700'/>
+  </g>
+</svg>

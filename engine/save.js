@@ -1,0 +1,1 @@
+const Save={save(){localStorage.setItem('StudyWizard',JSON.stringify(Game.state));},load(){Object.assign(Game.state,JSON.parse(localStorage.getItem('StudyWizard')||'{}'));}};
