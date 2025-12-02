@@ -9,119 +9,209 @@
 </head>
 <body>
   <div id="app">
+    <!-- Background Canvas -->
     <canvas id="towerCanvas"></canvas>
-    
+
+    <!-- UI Overlay -->
     <div class="overlay-ui">
       <header class="app-header">
         <div class="tower-title">
           <h1>🔮 Cozy Wizard Tower</h1>
-          <p class="subtitle">Your Magical Sanctuary</p>
+          <p class="subtitle">Turn quiet focus into gentle progress.</p>
         </div>
-        <div class="resources">
-          <div class="resource-item">
-            <span class="resource-icon">✨</span>
-            <span id="manaAmount" class="resource-value">0</span>
+
+        <div class="header-metrics">
+          <div class="resources">
+            <div class="resource-item">
+              <span class="resource-icon">✨</span>
+              <span id="manaAmount" class="resource-value">0</span>
+            </div>
+            <div class="resource-item">
+              <span class="resource-icon">📜</span>
+              <span id="scrollsAmount" class="resource-value">0</span>
+            </div>
           </div>
-          <div class="resource-item">
-            <span class="resource-icon">📜</span>
-            <span id="scrollsAmount" class="resource-value">0</span>
+
+          <div class="tower-meta">
+            <div class="meta-item">
+              <span class="meta-label">Tower Rank</span>
+              <span id="towerRankLabel" class="meta-value">1</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Mana Bonus</span>
+              <span id="manaMultiplier" class="meta-value">×1.00</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Session</span>
+              <span id="playtimeLabel" class="meta-value">0:00</span>
+            </div>
           </div>
         </div>
       </header>
 
-      <main class="main-content">
-        <div class="welcome-card" id="welcomeCard">
-          <h2>Welcome, Wizard!</h2>
-          <p>Click around your tower to discover magic. Candles generate mana, books unlock wisdom, and your tower grows more enchanted over time.</p>
-          <button class="btn-primary" id="dismissWelcome">Begin Your Journey</button>
-        </div>
+      <main class="main-content main-grid">
+        <!-- LEFT COLUMN -->
+        <section class="left-column">
+          <div class="welcome-card" id="welcomeCard">
+            <h2>Welcome, Wizard!</h2>
+            <p>
+              Click around your tower to discover magic. Candles generate mana,
+              books unlock wisdom, and your cozy score makes everything feel
+              warmer and more rewarding.
+            </p>
+            <button class="btn-primary" id="dismissWelcome">Begin Your Journey</button>
+          </div>
 
-        <div class="interaction-hints">
-          <div class="hint-item">
-            <span class="hint-icon">🕯️</span>
-            <span>Click candles for mana</span>
-          </div>
-          <div class="hint-item">
-            <span class="hint-icon">📖</span>
-            <span>Click the book for wisdom</span>
-          </div>
-          <div class="hint-item">
-            <span class="hint-icon">🌙</span>
-            <span>Change the time of day</span>
-          </div>
-        </div>
-
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-header">
-              <span class="stat-icon">⚡</span>
-              <span class="stat-title">Mana Generation</span>
+          <div class="interaction-hints">
+            <div class="hint-item">
+              <span class="hint-icon">🕯️</span>
+              <span>Click floating candles for mana</span>
             </div>
-            <div class="stat-value" id="manaRate">0.5 / sec</div>
-            <div class="stat-label">Passive income from candles</div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-header">
-              <span class="stat-icon">📚</span>
-              <span class="stat-title">Wisdom Level</span>
+            <div class="hint-item">
+              <span class="hint-icon">📖</span>
+              <span>Click the book for wisdom & scrolls</span>
             </div>
-            <div class="stat-value" id="wisdomLevel">1</div>
-            <div class="stat-label">Read books to increase</div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-header">
-              <span class="stat-icon">🎨</span>
-              <span class="stat-title">Cozy Score</span>
+            <div class="hint-item">
+              <span class="hint-icon">🌙</span>
+              <span>Change the time of day for vibes</span>
             </div>
-            <div class="stat-value" id="cozyScore">50</div>
-            <div class="stat-label">Tower comfort rating</div>
           </div>
-        </div>
 
-        <div class="upgrades-section">
-          <h2>✨ Tower Enchantments</h2>
-          <div class="upgrade-grid" id="upgradesList"></div>
-        </div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-header">
+                <span class="stat-icon">⚡</span>
+                <span class="stat-title">Mana Generation</span>
+              </div>
+              <div class="stat-value" id="manaRate">0.5 / sec</div>
+              <div class="stat-label">Base rate before bonuses</div>
+            </div>
 
-        <div class="ambiance-section">
-          <h2>🌙 Tower Ambiance</h2>
-          <div class="ambiance-controls">
-            <div class="control-group">
-              <label>Time of Day</label>
-              <div class="button-group">
-                <button class="ambiance-btn active" data-time="evening">🌆 Evening</button>
-                <button class="ambiance-btn" data-time="night">🌃 Night</button>
-                <button class="ambiance-btn" data-time="dawn">🌅 Dawn</button>
+            <div class="stat-card">
+              <div class="stat-header">
+                <span class="stat-icon">📚</span>
+                <span class="stat-title">Wisdom Level</span>
+              </div>
+              <div class="stat-value" id="wisdomLevel">1</div>
+              <div class="stat-label">Read books to increase</div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-header">
+                <span class="stat-icon">🎨</span>
+                <span class="stat-title">Cozy Score</span>
+              </div>
+              <div class="stat-value" id="cozyScore">50</div>
+              <div class="stat-label">Higher coziness = better bonuses</div>
+            </div>
+          </div>
+
+          <!-- Daily Focus Quest -->
+          <section class="quest-section">
+            <h2>🎯 Tonight’s Focus</h2>
+            <div class="quest-card">
+              <div class="quest-header">
+                <span id="questTitle" class="quest-title">Gentle warm-up</span>
+              </div>
+              <p id="questDescription" class="quest-description">
+                Do a little something in your tower.
+              </p>
+
+              <div class="quest-progress">
+                <div class="quest-progress-bar">
+                  <div id="questProgressBarInner" class="quest-progress-bar-inner"></div>
+                </div>
+                <div id="questProgressText" class="quest-progress-text">0 / 0</div>
+              </div>
+
+              <div class="quest-reward-row">
+                <span id="questRewardText" class="quest-reward-text">Reward: —</span>
+                <button id="questClaimBtn" class="btn-secondary" disabled>Claim</button>
               </div>
             </div>
+          </section>
 
-            <div class="control-group">
-              <label>Candle Count: <span id="candleCount">3</span></label>
-              <input type="range" id="candleSlider" min="1" max="7" value="3" class="slider" />
+          <!-- Ambiance / Settings -->
+          <section class="ambiance-section">
+            <h2>🌙 Tower Ambiance</h2>
+            <div class="ambiance-controls">
+              <div class="control-group">
+                <label>Time of Day</label>
+                <div class="button-group">
+                  <button class="ambiance-btn active" data-time="evening">🌆 Evening</button>
+                  <button class="ambiance-btn" data-time="night">🌃 Night</button>
+                  <button class="ambiance-btn" data-time="dawn">🌅 Dawn</button>
+                </div>
+              </div>
+
+              <div class="control-group">
+                <label>Candle Count: <span id="candleCount">3</span></label>
+                <input
+                  type="range"
+                  id="candleSlider"
+                  min="1"
+                  max="7"
+                  value="3"
+                  class="slider"
+                />
+              </div>
+
+              <div class="control-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="particlesToggle" checked />
+                  <span>Magic Particles ✨</span>
+                </label>
+              </div>
+
+              <div class="control-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="soundToggle" checked />
+                  <span>Sound Effects 🎵</span>
+                </label>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- RIGHT COLUMN: TABS -->
+        <section class="right-column">
+          <div class="panel tabs-panel">
+            <div class="tab-bar">
+              <button class="tab-btn active" data-tab-target="tab-upgrades">Upgrades</button>
+              <button class="tab-btn" data-tab-target="tab-achievements">Achievements</button>
+              <button class="tab-btn" data-tab-target="tab-log">Tower Log</button>
             </div>
 
-            <div class="control-group">
-              <label class="checkbox-label">
-                <input type="checkbox" id="particlesToggle" checked />
-                <span>Magic Particles ✨</span>
-              </label>
-            </div>
+            <div class="tab-body">
+              <!-- UPGRADES TAB -->
+              <section id="tab-upgrades" class="tab-content active">
+                <h2>✨ Tower Enchantments</h2>
+                <p class="panel-subtitle">
+                  Spend mana and scrolls to shape how your tower feels and behaves.
+                </p>
+                <div class="upgrade-grid" id="upgradesList"></div>
+              </section>
 
-            <div class="control-group">
-              <label class="checkbox-label">
-                <input type="checkbox" id="soundToggle" checked />
-                <span>Ambient Sounds 🎵</span>
-              </label>
+              <!-- ACHIEVEMENTS TAB -->
+              <section id="tab-achievements" class="tab-content">
+                <h2>🏆 Milestones</h2>
+                <p class="panel-subtitle">
+                  Little celebrations of your time inside the tower.
+                </p>
+                <div class="achievements-grid" id="achievementsList"></div>
+              </section>
+
+              <!-- TOWER LOG TAB -->
+              <section id="tab-log" class="tab-content">
+                <h2>📜 Tower Log</h2>
+                <p class="panel-subtitle">
+                  A gentle record of noteworthy moments and upgrades.
+                </p>
+                <ul id="logList" class="log-list"></ul>
+              </section>
             </div>
           </div>
-        </div>
-
-        <div class="achievements-section">
-          <h2>🏆 Achievements</h2>
-          <div class="achievements-grid" id="achievementsList"></div>
-        </div>
+        </section>
       </main>
 
       <footer class="app-footer">
@@ -130,8 +220,10 @@
       </footer>
     </div>
 
+    <!-- Floating click feedback -->
     <div class="click-feedback" id="clickFeedback"></div>
 
+    <!-- Book modal -->
     <div class="modal" id="bookModal">
       <div class="modal-content book-modal">
         <button class="modal-close" id="closeBookModal">×</button>
@@ -145,6 +237,9 @@
         </div>
       </div>
     </div>
+
+    <!-- Toast notifications -->
+    <div id="toastContainer" class="toast-container"></div>
   </div>
 
   <script src="script.js"></script>
