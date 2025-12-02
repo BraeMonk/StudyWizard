@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Study Wizard - RPG Idle</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="header">
+      <div class="header-content">
+        <div class="title-area">
+          <h1>⚔ Study Wizard ⚔</h1>
+          <p>A Lofi Medieval Fantasy RPG Idle</p>
+        </div>
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="stat-label">Ink</div>
+            <div class="stat-value" id="inkDisplay">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Wisdom</div>
+            <div class="stat-value" id="wisdomDisplay">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Ink/sec</div>
+            <div class="stat-value" id="rateDisplay">0.2</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-container">
+      <div class="character-section">
+        <div class="scene-card">
+          <canvas id="mainCanvas"></canvas>
+          <p class="scene-caption">Click to channel magical energy and summon Ink from the void.</p>
+        </div>
+
+        <div class="characters-card">
+          <h2>⚔ Recruit Companions ⚔</h2>
+          <div class="character-grid" id="characterGrid"></div>
+        </div>
+
+        <div class="study-boon-card">
+          <h2>✨ Study Boon</h2>
+          <p>Focus for 25 minutes to receive a <strong>+50% Ink</strong> blessing.</p>
+          <button class="study-btn" id="studyBtn">Begin Study Session</button>
+          <div class="timer-bar">
+            <div class="timer-fill" id="timerFill" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="upgrades">Upgrades</button>
+          <button class="tab-btn" data-tab="clicking">Clicking</button>
+          <button class="tab-btn" data-tab="archive">Archive</button>
+          <button class="tab-btn" data-tab="about">About</button>
+        </div>
+
+        <div class="panel-card">
+          <div class="tab-panel active" id="upgrades">
+            <h2>Library Upgrades</h2>
+            <p class="panel-desc">Enhance your castle library to generate more Ink passively.</p>
+            <div class="upgrade-list" id="passiveUpgrades"></div>
+          </div>
+
+          <div class="tab-panel" id="clicking">
+            <h2>Click Power</h2>
+            <p class="panel-desc">Upgrade your magical implements to earn more Ink per click.</p>
+            <div class="upgrade-list" id="clickUpgrades"></div>
+          </div>
+
+          <div class="tab-panel" id="archive">
+            <h2>Restore the Archive</h2>
+            <p class="panel-desc">Transform accumulated Ink into eternal Wisdom Pages.</p>
+            <div class="prestige-info">
+              <div class="prestige-label">Wisdom Gained on Prestige:</div>
+              <div class="prestige-value" id="prestigeValue">0</div>
+              <div class="prestige-bonus" id="prestigeBonus">Wisdom grants permanent bonuses</div>
+            </div>
+            <button class="prestige-btn" id="prestigeBtn">Restore Archive</button>
+            <p class="prestige-note">Resets Ink and upgrades. Wisdom and companions remain.</p>
+          </div>
+
+          <div class="tab-panel" id="about">
+            <h2>About Study Wizard</h2>
+            <p class="panel-desc">A cozy lofi medieval fantasy idle RPG where studying becomes an adventure.</p>
+            <ul class="about-list">
+              <li>Click to channel magical energy and earn Ink</li>
+              <li>Recruit mystical companions to generate passive Ink</li>
+              <li>Upgrade your library and magical tools</li>
+              <li>Activate Study Boon when focusing for real studies</li>
+              <li>Prestige to gain eternal Wisdom bonuses</li>
+            </ul>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="footer">
+      Study Wizard · A Lofi Medieval Fantasy RPG Idle · Progress auto-saves
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

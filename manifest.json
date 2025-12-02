@@ -1,0 +1,9 @@
+{
+  "name": "Study Wizard - RPG Idle",
+  "short_name": "StudyWizard",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#1a0f0a",
+  "theme_color": "#3d2817",
+  "icons": []
+}
