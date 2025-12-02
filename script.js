@@ -392,234 +392,440 @@ function getTimeColors() {
   return colors[state.timeOfDay] || colors.evening;
 }
 
-// Draw functions
+// Modern design variables
+let time = 0;
+let bookFloat = 0;
+
+// Draw functions - MODERN CLEAN VERSION
 function drawBackground() {
-  const colors = getTimeColors();
+  const timeColors = getTimeColors();
+  
+  // Smooth gradient background
   const gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
-  gradient.addColorStop(0, colors.sky[0]);
-  gradient.addColorStop(0.5, colors.sky[1]);
-  gradient.addColorStop(1, colors.sky[2]);
+  gradient.addColorStop(0, timeColors.sky[0]);
+  gradient.addColorStop(0.4, timeColors.sky[1]);
+  gradient.addColorStop(1, timeColors.sky[2]);
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+  
+  // Subtle noise texture overlay
+  ctx.globalAlpha = 0.03;
+  for (let i = 0; i < 100; i++) {
+    const x = Math.random() * canvasWidth;
+    const y = Math.random() * canvasHeight;
+    ctx.fillStyle = Math.random() > 0.5 ? '#ffffff' : '#000000';
+    ctx.fillRect(x, y, 1, 1);
+  }
+  ctx.globalAlpha = 1;
 }
 
 function drawStars() {
-  const colors = getTimeColors();
-  if (colors.stars > 0) {
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-    const starCount = Math.floor(50 * colors.stars);
+  const timeColors = getTimeColors();
+  if (timeColors.stars > 0) {
+    const starCount = Math.floor(80 * timeColors.stars);
+    
     for (let i = 0; i < starCount; i++) {
-      const x = (i * 137.508) % canvasWidth; // golden angle
+      const x = (i * 137.508) % canvasWidth;
       const y = (i * 197.508) % (canvasHeight * 0.6);
-      const size = Math.random() * 1.5;
+      const twinkle = Math.sin(time * 0.002 + i * 0.5) * 0.5 + 0.5;
+      const size = (Math.sin(i) * 0.5 + 1) * 1.5;
+      
+      ctx.save();
+      ctx.globalAlpha = twinkle * timeColors.stars * 0.8;
+      
+      // Star glow
+      const starGlow = ctx.createRadialGradient(x, y, 0, x, y, size * 3);
+      starGlow.addColorStop(0, 'rgba(255, 255, 255, 1)');
+      starGlow.addColorStop(0.3, 'rgba(255, 255, 255, 0.6)');
+      starGlow.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = starGlow;
+      ctx.beginPath();
+      ctx.arc(x, y, size * 3, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Star core
+      ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.arc(x, y, size, 0, Math.PI * 2);
       ctx.fill();
+      
+      ctx.restore();
     }
   }
 }
 
 function drawMoon() {
-  const colors = getTimeColors();
-  if (colors.moon) {
-    const x = canvasWidth * 0.8;
-    const y = canvasHeight * 0.2;
-    const radius = 40;
+  const timeColors = getTimeColors();
+  if (timeColors.moon) {
+    const x = canvasWidth * 0.82;
+    const y = canvasHeight * 0.18;
+    const radius = Math.min(60, canvasWidth * 0.08);
     
-    const gradient = ctx.createRadialGradient(x, y, radius * 0.3, x, y, radius);
-    gradient.addColorStop(0, 'rgba(255, 250, 230, 1)');
-    gradient.addColorStop(0.7, 'rgba(240, 235, 210, 0.8)');
-    gradient.addColorStop(1, 'rgba(240, 235, 210, 0)');
+    // Moon outer glow
+    const outerGlow = ctx.createRadialGradient(x, y, radius * 0.8, x, y, radius * 3);
+    outerGlow.addColorStop(0, 'rgba(255, 250, 230, 0.15)');
+    outerGlow.addColorStop(0.5, 'rgba(255, 250, 230, 0.05)');
+    outerGlow.addColorStop(1, 'rgba(255, 250, 230, 0)');
+    ctx.fillStyle = outerGlow;
+    ctx.beginPath();
+    ctx.arc(x, y, radius * 3, 0, Math.PI * 2);
+    ctx.fill();
     
-    ctx.fillStyle = gradient;
+    // Moon body
+    const moonGradient = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.3, 0, x, y, radius);
+    moonGradient.addColorStop(0, '#fffdf5');
+    moonGradient.addColorStop(0.7, '#fdf8e8');
+    moonGradient.addColorStop(1, '#e8e0c8');
+    ctx.fillStyle = moonGradient;
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, Math.PI * 2);
     ctx.fill();
     
-    // Moon glow
-    ctx.fillStyle = 'rgba(255, 250, 230, 0.1)';
+    // Moon craters (subtle)
+    ctx.globalAlpha = 0.1;
+    ctx.fillStyle = '#c8c0a8';
     ctx.beginPath();
-    ctx.arc(x, y, radius * 2, 0, Math.PI * 2);
+    ctx.arc(x - radius * 0.3, y - radius * 0.2, radius * 0.2, 0, Math.PI * 2);
     ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + radius * 0.25, y + radius * 0.15, radius * 0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
   }
 }
 
 function drawTower() {
   const centerX = canvasWidth / 2;
-  const baseY = canvasHeight * 0.85;
-  const towerWidth = Math.min(300, canvasWidth * 0.4);
-  const towerHeight = canvasHeight * 0.6;
+  const baseY = canvasHeight;
+  const towerWidth = Math.min(350, canvasWidth * 0.45);
+  const towerHeight = canvasHeight * 0.75;
   
-  // Tower body
-  ctx.fillStyle = '#2a1810';
+  // Tower shadow
+  ctx.save();
+  ctx.globalAlpha = 0.3;
+  ctx.fillStyle = '#000000';
+  ctx.filter = 'blur(30px)';
   ctx.beginPath();
-  ctx.moveTo(centerX - towerWidth / 2, baseY);
-  ctx.lineTo(centerX - towerWidth / 2.5, baseY - towerHeight);
-  ctx.lineTo(centerX + towerWidth / 2.5, baseY - towerHeight);
-  ctx.lineTo(centerX + towerWidth / 2, baseY);
+  ctx.ellipse(centerX, baseY - 20, towerWidth * 0.6, 40, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  
+  // Tower body with gradient
+  const towerGradient = ctx.createLinearGradient(centerX - towerWidth / 2, 0, centerX + towerWidth / 2, 0);
+  towerGradient.addColorStop(0, '#1a1210');
+  towerGradient.addColorStop(0.3, '#2a1f18');
+  towerGradient.addColorStop(0.5, '#352820');
+  towerGradient.addColorStop(0.7, '#2a1f18');
+  towerGradient.addColorStop(1, '#1a1210');
+  
+  ctx.fillStyle = towerGradient;
+  ctx.beginPath();
+  ctx.moveTo(centerX - towerWidth / 2.2, baseY);
+  ctx.lineTo(centerX - towerWidth / 3, baseY - towerHeight);
+  ctx.lineTo(centerX + towerWidth / 3, baseY - towerHeight);
+  ctx.lineTo(centerX + towerWidth / 2.2, baseY);
   ctx.closePath();
   ctx.fill();
   
-  // Tower shading
-  const gradient = ctx.createLinearGradient(
-    centerX - towerWidth / 2, baseY,
-    centerX + towerWidth / 2, baseY
-  );
-  gradient.addColorStop(0, 'rgba(0, 0, 0, 0.4)');
-  gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
-  gradient.addColorStop(1, 'rgba(0, 0, 0, 0.3)');
-  ctx.fillStyle = gradient;
-  ctx.beginPath();
-  ctx.moveTo(centerX - towerWidth / 2, baseY);
-  ctx.lineTo(centerX - towerWidth / 2.5, baseY - towerHeight);
-  ctx.lineTo(centerX + towerWidth / 2.5, baseY - towerHeight);
-  ctx.lineTo(centerX + towerWidth / 2, baseY);
-  ctx.closePath();
-  ctx.fill();
+  // Tower texture lines (stone blocks)
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 20; i++) {
+    const y = baseY - (i * towerHeight / 20);
+    const leftX = centerX - towerWidth / 2.2 + (i * towerWidth / 60);
+    const rightX = centerX + towerWidth / 2.2 - (i * towerWidth / 60);
+    ctx.beginPath();
+    ctx.moveTo(leftX, y);
+    ctx.lineTo(rightX, y);
+    ctx.stroke();
+  }
   
   // Tower roof
-  ctx.fillStyle = '#1a0f08';
+  const roofGradient = ctx.createLinearGradient(0, baseY - towerHeight - 80, 0, baseY - towerHeight);
+  roofGradient.addColorStop(0, '#1a0f0a');
+  roofGradient.addColorStop(1, '#0d0805');
+  ctx.fillStyle = roofGradient;
   ctx.beginPath();
-  ctx.moveTo(centerX - towerWidth / 2.2, baseY - towerHeight);
-  ctx.lineTo(centerX, baseY - towerHeight - 60);
-  ctx.lineTo(centerX + towerWidth / 2.2, baseY - towerHeight);
+  ctx.moveTo(centerX - towerWidth / 2.8, baseY - towerHeight);
+  ctx.lineTo(centerX, baseY - towerHeight - 80);
+  ctx.lineTo(centerX + towerWidth / 2.8, baseY - towerHeight);
   ctx.closePath();
   ctx.fill();
   
-  // Window
-  const windowY = baseY - towerHeight * 0.6;
-  const windowWidth = towerWidth * 0.35;
-  const windowHeight = towerHeight * 0.25;
-  
-  // Window glow
-  const windowGlow = ctx.createRadialGradient(
-    centerX, windowY + windowHeight / 2, 0,
-    centerX, windowY + windowHeight / 2, windowWidth
-  );
-  windowGlow.addColorStop(0, 'rgba(255, 180, 80, 0.4)');
-  windowGlow.addColorStop(1, 'rgba(255, 180, 80, 0)');
-  ctx.fillStyle = windowGlow;
-  ctx.beginPath();
-  ctx.arc(centerX, windowY + windowHeight / 2, windowWidth * 1.5, 0, Math.PI * 2);
-  ctx.fill();
-  
-  // Window frame
-  ctx.fillStyle = '#8b5a3c';
-  ctx.fillRect(
-    centerX - windowWidth / 2,
-    windowY,
-    windowWidth,
-    windowHeight
-  );
-  
-  // Window panes
-  ctx.fillStyle = 'rgba(255, 200, 100, 0.8)';
-  ctx.fillRect(
-    centerX - windowWidth / 2 + 5,
-    windowY + 5,
-    windowWidth - 10,
-    windowHeight - 10
-  );
-  
-  // Window cross
-  ctx.fillStyle = '#5d3a22';
-  ctx.fillRect(centerX - 2, windowY, 4, windowHeight);
-  ctx.fillRect(
-    centerX - windowWidth / 2,
-    windowY + windowHeight / 2 - 2,
-    windowWidth,
-    4
-  );
-}
-
-function drawDesk() {
-  const centerX = canvasWidth / 2;
-  const deskY = canvasHeight * 0.7;
-  const deskWidth = 200;
-  const deskHeight = 40;
-  
-  // Desk
-  ctx.fillStyle = '#5d3a22';
-  ctx.fillRect(centerX - deskWidth / 2, deskY, deskWidth, deskHeight);
-  
-  // Desk top
-  ctx.fillStyle = '#8b5a3c';
-  ctx.fillRect(centerX - deskWidth / 2, deskY, deskWidth, 8);
-  
-  // Papers
-  ctx.fillStyle = 'rgba(245, 235, 220, 0.9)';
-  ctx.fillRect(centerX - 60, deskY + 12, 50, 35);
-  ctx.fillRect(centerX - 55, deskY + 10, 50, 35);
-  
-  // Ink bottle
-  ctx.fillStyle = '#1a0a3e';
-  ctx.beginPath();
-  ctx.arc(centerX + 40, deskY + 25, 8, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillRect(centerX + 36, deskY + 18, 8, 7);
-  
-  // Quill
-  ctx.strokeStyle = '#8b6f47';
+  // Roof edge highlight
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(centerX + 50, deskY + 30);
-  ctx.lineTo(centerX + 65, deskY + 15);
+  ctx.moveTo(centerX - towerWidth / 2.8, baseY - towerHeight);
+  ctx.lineTo(centerX, baseY - towerHeight - 80);
+  ctx.stroke();
+}
+
+function drawWindow() {
+  const centerX = canvasWidth / 2;
+  const baseY = canvasHeight;
+  const towerHeight = canvasHeight * 0.75;
+  const windowY = baseY - towerHeight * 0.55;
+  const windowWidth = Math.min(120, canvasWidth * 0.15);
+  const windowHeight = Math.min(140, canvasHeight * 0.18);
+  
+  // Window warm glow (large)
+  const glowSize = windowWidth * 2;
+  const windowGlow = ctx.createRadialGradient(centerX, windowY + windowHeight / 2, 0, centerX, windowY + windowHeight / 2, glowSize);
+  windowGlow.addColorStop(0, 'rgba(255, 190, 100, 0.4)');
+  windowGlow.addColorStop(0.4, 'rgba(255, 160, 80, 0.15)');
+  windowGlow.addColorStop(1, 'rgba(255, 140, 60, 0)');
+  ctx.fillStyle = windowGlow;
+  ctx.beginPath();
+  ctx.arc(centerX, windowY + windowHeight / 2, glowSize, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Window frame (arched)
+  ctx.fillStyle = '#4a3525';
+  ctx.beginPath();
+  ctx.roundRect(centerX - windowWidth / 2, windowY, windowWidth, windowHeight, [windowWidth / 2, windowWidth / 2, 8, 8]);
+  ctx.fill();
+  
+  // Window inner frame
+  ctx.fillStyle = '#5d4435';
+  ctx.beginPath();
+  ctx.roundRect(centerX - windowWidth / 2 + 6, windowY + 6, windowWidth - 12, windowHeight - 12, [windowWidth / 2, windowWidth / 2, 4, 4]);
+  ctx.fill();
+  
+  // Window light (warm amber glow)
+  const lightGradient = ctx.createRadialGradient(
+    centerX, windowY + windowHeight / 3, 0,
+    centerX, windowY + windowHeight / 2, windowWidth / 2
+  );
+  lightGradient.addColorStop(0, '#ffe5b8');
+  lightGradient.addColorStop(0.5, '#ffb870');
+  lightGradient.addColorStop(1, '#ff9850');
+  ctx.fillStyle = lightGradient;
+  ctx.beginPath();
+  ctx.roundRect(centerX - windowWidth / 2 + 10, windowY + 10, windowWidth - 20, windowHeight - 20, [windowWidth / 2, windowWidth / 2, 4, 4]);
+  ctx.fill();
+  
+  // Window divider (cross)
+  ctx.strokeStyle = 'rgba(74, 53, 37, 0.8)';
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(centerX, windowY + 10);
+  ctx.lineTo(centerX, windowY + windowHeight - 10);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(centerX - windowWidth / 2 + 10, windowY + windowHeight / 2);
+  ctx.lineTo(centerX + windowWidth / 2 - 10, windowY + windowHeight / 2);
+  ctx.stroke();
+  
+  // Subtle window reflection
+  ctx.save();
+  ctx.globalAlpha = 0.2;
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(centerX - windowWidth / 4, windowY + windowHeight / 4, windowWidth / 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawStudyRoom() {
+  const centerX = canvasWidth / 2;
+  const roomY = canvasHeight * 0.65;
+  const deskWidth = Math.min(280, canvasWidth * 0.35);
+  
+  // Desk with depth
+  const deskGradient = ctx.createLinearGradient(0, roomY, 0, roomY + 60);
+  deskGradient.addColorStop(0, '#6b4a32');
+  deskGradient.addColorStop(0.3, '#5d3f2a');
+  deskGradient.addColorStop(1, '#3d2818');
+  
+  ctx.fillStyle = deskGradient;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+  ctx.shadowBlur = 20;
+  ctx.shadowOffsetY = 10;
+  ctx.beginPath();
+  ctx.roundRect(centerX - deskWidth / 2, roomY, deskWidth, 60, 8);
+  ctx.fill();
+  ctx.shadowColor = 'transparent';
+  
+  // Desk top highlight
+  ctx.fillStyle = 'rgba(139, 106, 79, 0.3)';
+  ctx.beginPath();
+  ctx.roundRect(centerX - deskWidth / 2, roomY, deskWidth, 8, [8, 8, 0, 0]);
+  ctx.fill();
+  
+  // Open book on desk (floating slightly)
+  bookFloat = Math.sin(time * 0.001) * 3;
+  const bookY = roomY + 20 + bookFloat;
+  
+  // Book shadow
+  ctx.save();
+  ctx.globalAlpha = 0.2 - bookFloat * 0.02;
+  ctx.fillStyle = '#000000';
+  ctx.filter = 'blur(8px)';
+  ctx.beginPath();
+  ctx.ellipse(centerX - 40, roomY + 40, 45, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  
+  // Book left page
+  ctx.fillStyle = '#f9f3e8';
+  ctx.beginPath();
+  ctx.roundRect(centerX - 85, bookY - 10, 80, 60, [4, 0, 0, 4]);
+  ctx.fill();
+  
+  ctx.strokeStyle = 'rgba(139, 106, 79, 0.2)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(centerX - 85, bookY - 10, 80, 60);
+  
+  // Book right page
+  ctx.fillStyle = '#f5ead8';
+  ctx.beginPath();
+  ctx.roundRect(centerX + 5, bookY - 10, 80, 60, [0, 4, 4, 0]);
+  ctx.fill();
+  
+  ctx.strokeStyle = 'rgba(139, 106, 79, 0.2)';
+  ctx.strokeRect(centerX + 5, bookY - 10, 80, 60);
+  
+  // Book text lines (decorative)
+  ctx.strokeStyle = 'rgba(100, 80, 60, 0.3)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 6; i++) {
+    ctx.beginPath();
+    ctx.moveTo(centerX - 78, bookY + i * 8);
+    ctx.lineTo(centerX - 15, bookY + i * 8);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.moveTo(centerX + 12, bookY + i * 8);
+    ctx.lineTo(centerX + 75, bookY + i * 8);
+    ctx.stroke();
+  }
+  
+  // Magical glow from book
+  const bookGlow = ctx.createRadialGradient(centerX - 40, bookY + 20, 0, centerX - 40, bookY + 20, 80);
+  bookGlow.addColorStop(0, 'rgba(200, 160, 255, 0.15)');
+  bookGlow.addColorStop(1, 'rgba(200, 160, 255, 0)');
+  ctx.fillStyle = bookGlow;
+  ctx.beginPath();
+  ctx.arc(centerX - 40, bookY + 20, 80, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Ink bottle
+  const inkX = centerX + 90;
+  const inkY = roomY + 25;
+  
+  ctx.fillStyle = '#1a0f2e';
+  ctx.beginPath();
+  ctx.roundRect(inkX, inkY, 24, 30, [2, 2, 6, 6]);
+  ctx.fill();
+  
+  // Ink bottle neck
+  ctx.fillStyle = '#2d1850';
+  ctx.beginPath();
+  ctx.roundRect(inkX + 6, inkY - 6, 12, 8, [3, 3, 0, 0]);
+  ctx.fill();
+  
+  // Ink bottle highlight
+  ctx.save();
+  ctx.globalAlpha = 0.3;
+  ctx.fillStyle = '#7b5adc';
+  ctx.beginPath();
+  ctx.arc(inkX + 8, inkY + 10, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  
+  // Quill
+  ctx.save();
+  ctx.strokeStyle = '#d4a574';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(inkX + 30, inkY + 20);
+  ctx.quadraticCurveTo(inkX + 45, inkY + 10, inkX + 55, inkY);
   ctx.stroke();
   
   // Quill tip
-  ctx.fillStyle = '#c9a86a';
+  ctx.fillStyle = '#8b7355';
   ctx.beginPath();
-  ctx.moveTo(centerX + 65, deskY + 15);
-  ctx.lineTo(centerX + 62, deskY + 20);
-  ctx.lineTo(centerX + 68, deskY + 20);
+  ctx.moveTo(inkX + 55, inkY);
+  ctx.lineTo(inkX + 50, inkY + 6);
+  ctx.lineTo(inkX + 58, inkY + 4);
   ctx.closePath();
   ctx.fill();
+  
+  // Quill feather detail
+  ctx.strokeStyle = 'rgba(212, 165, 116, 0.5)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 5; i++) {
+    const t = i / 5;
+    const px = inkX + 30 + t * 25;
+    const py = inkY + 20 - t * 20;
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px - 5, py + 5);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 function drawCandles() {
-  candleFlames.forEach(candle => {
-    // Candle body
-    ctx.fillStyle = '#f4f0e7';
-    ctx.fillRect(candle.x - 6, candle.y, 12, 30);
+  candleFlames.forEach((candle, index) => {
+    const flicker = Math.sin(time * 0.003 + index * 2) * 2;
     
-    // Candle shading
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-    ctx.fillRect(candle.x - 6, candle.y, 3, 30);
-    
-    // Flame flicker
-    candle.flicker += candle.speed;
-    const flicker = Math.sin(candle.flicker) * 2;
-    const flameHeight = 15 + flicker;
-    const flameY = candle.y - flameHeight;
-    
-    // Flame glow
-    const glowGradient = ctx.createRadialGradient(
-      candle.x, flameY + 5, 0,
-      candle.x, flameY + 5, 30
-    );
-    glowGradient.addColorStop(0, 'rgba(255, 200, 100, 0.6)');
-    glowGradient.addColorStop(1, 'rgba(255, 200, 100, 0)');
-    ctx.fillStyle = glowGradient;
+    // Candle glow
+    const glowSize = 60 + flicker * 5;
+    const candleGlow = ctx.createRadialGradient(candle.x, candle.y - 15, 0, candle.x, candle.y - 15, glowSize);
+    candleGlow.addColorStop(0, 'rgba(255, 200, 100, 0.4)');
+    candleGlow.addColorStop(0.5, 'rgba(255, 160, 80, 0.15)');
+    candleGlow.addColorStop(1, 'rgba(255, 140, 60, 0)');
+    ctx.fillStyle = candleGlow;
     ctx.beginPath();
-    ctx.arc(candle.x, flameY + 5, 30, 0, Math.PI * 2);
+    ctx.arc(candle.x, candle.y - 15, glowSize, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Candle body
+    const candleGradient = ctx.createLinearGradient(candle.x - 10, 0, candle.x + 10, 0);
+    candleGradient.addColorStop(0, '#e8ddc4');
+    candleGradient.addColorStop(0.5, '#f4f0e7');
+    candleGradient.addColorStop(1, '#d0c2a4');
+    ctx.fillStyle = candleGradient;
+    ctx.beginPath();
+    ctx.roundRect(candle.x - 10, candle.y, 20, 50, [2, 2, 4, 4]);
+    ctx.fill();
+    
+    // Candle wax drip
+    ctx.fillStyle = 'rgba(232, 221, 196, 0.8)';
+    ctx.beginPath();
+    ctx.ellipse(candle.x - 5, candle.y + 10, 3, 8, 0.3, 0, Math.PI * 2);
     ctx.fill();
     
     // Flame
-    const flameGradient = ctx.createRadialGradient(
-      candle.x, flameY + flameHeight / 2, 0,
-      candle.x, flameY + flameHeight / 2, 8
-    );
-    flameGradient.addColorStop(0, '#fff5d6');
-    flameGradient.addColorStop(0.4, '#ffb347');
-    flameGradient.addColorStop(1, '#ff6b35');
+    const flameHeight = 20 + flicker;
+    const flameY = candle.y - flameHeight;
+    
+    const flameGradient = ctx.createRadialGradient(candle.x, flameY + 10, 0, candle.x, flameY + 5, 12);
+    flameGradient.addColorStop(0, '#fffdf5');
+    flameGradient.addColorStop(0.3, '#ffe5b8');
+    flameGradient.addColorStop(0.6, '#ffb870');
+    flameGradient.addColorStop(1, 'rgba(255, 107, 53, 0)');
+    
     ctx.fillStyle = flameGradient;
     ctx.beginPath();
-    ctx.ellipse(candle.x, flameY + flameHeight / 2, 6, flameHeight / 2, 0, 0, Math.PI * 2);
+    ctx.ellipse(candle.x, flameY + 10, 8, flameHeight / 2, 0, 0, Math.PI * 2);
     ctx.fill();
     
+    // Flame core
+    ctx.fillStyle = '#ffffff';
+    ctx.globalAlpha = 0.8 + Math.sin(time * 0.005 + index) * 0.2;
+    ctx.beginPath();
+    ctx.ellipse(candle.x, flameY + 12, 4, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    
     // Add particles
-    if (state.particlesEnabled && Math.random() < 0.3) {
-      particles.push(new Particle(candle.x, flameY));
+    if (state.particlesEnabled && Math.random() < 0.15) {
+      particles.push(new Particle(candle.x + (Math.random() - 0.5) * 6, flameY));
     }
   });
 }
@@ -633,17 +839,39 @@ function drawParticles() {
   particles = particles.filter(p => !p.isDead());
   particles.forEach(p => {
     p.update();
-    p.draw();
+    
+    ctx.save();
+    ctx.globalAlpha = p.life * 0.8;
+    
+    // Particle glow
+    const particleGlow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2);
+    particleGlow.addColorStop(0, p.color);
+    particleGlow.addColorStop(1, p.color.replace('0.8', '0'));
+    ctx.fillStyle = particleGlow;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Particle core
+    ctx.fillStyle = p.celebrate ? p.color : '#fffdf5';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.restore();
   });
 }
 
-// Animation loop
+// Animation loop - UPDATED
 function animate() {
+  time++;
+  
   drawBackground();
   drawStars();
   drawMoon();
   drawTower();
-  drawDesk();
+  drawWindow();
+  drawStudyRoom();
   drawCandles();
   drawParticles();
   
