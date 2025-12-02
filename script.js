@@ -8,7 +8,7 @@ const state = {
   manaRate: 0.5,
   wisdomLevel: 1,
   cozyScore: 50,
-  timeOfDay: 'evening',
+  timeOfDay: "evening",
   candleCount: 3,
   soundEnabled: true,
   particlesEnabled: true,
@@ -22,77 +22,139 @@ const state = {
 // Upgrades Config
 const upgradesConfig = [
   {
-    id: 'candle_power',
-    name: 'Candle Enchantment',
-    icon: '🕯️',
-    desc: 'Candles generate more mana',
+    id: "candle_power",
+    name: "Candle Enchantment",
+    icon: "🕯️",
+    desc: "Candles generate more mana",
     baseCost: 50,
     costMult: 1.5,
-    effect: () => state.manaRate += 0.3,
-    costType: 'mana'
+    effect: () => {
+      state.manaRate += 0.3;
+    },
+    costType: "mana"
   },
   {
-    id: 'bookshelf',
-    name: 'Ancient Bookshelf',
-    icon: '📚',
-    desc: 'Unlock more wisdom from books',
+    id: "bookshelf",
+    name: "Ancient Bookshelf",
+    icon: "📚",
+    desc: "Unlock more wisdom from books",
     baseCost: 100,
     costMult: 1.8,
-    effect: () => state.cozyScore += 10,
-    costType: 'mana'
+    effect: () => {
+      state.cozyScore += 10;
+    },
+    costType: "mana"
   },
   {
-    id: 'crystal_ball',
-    name: 'Crystal Ball',
-    icon: '🔮',
-    desc: 'Passive mana generation',
+    id: "crystal_ball",
+    name: "Crystal Ball",
+    icon: "🔮",
+    desc: "Passive mana generation",
     baseCost: 200,
     costMult: 2.0,
-    effect: () => state.manaRate += 0.5,
-    costType: 'mana'
+    effect: () => {
+      state.manaRate += 0.5;
+    },
+    costType: "mana"
   },
   {
-    id: 'magic_carpet',
-    name: 'Flying Carpet',
-    icon: '🧞',
-    desc: 'Gather scrolls automatically',
+    id: "magic_carpet",
+    name: "Flying Carpet",
+    icon: "🧞",
+    desc: "Gather scrolls automatically",
     baseCost: 20,
     costMult: 1.6,
-    effect: () => state.scrolls += 5,
-    costType: 'scrolls'
+    effect: () => {
+      // Instant little reward when purchased; passive effect handled in gameLoop
+      state.scrolls += 5;
+    },
+    costType: "scrolls"
   },
   {
-    id: 'moon_ritual',
-    name: 'Moon Ritual',
-    icon: '🌙',
-    desc: 'Night time bonus mana',
+    id: "moon_ritual",
+    name: "Moon Ritual",
+    icon: "🌙",
+    desc: "Night time bonus mana",
     baseCost: 300,
     costMult: 2.2,
-    effect: () => state.manaRate += 1.0,
-    costType: 'mana'
+    effect: () => {
+      // Actual night bonus is calculated in gameLoop based on level & timeOfDay
+      state.cozyScore += 5;
+    },
+    costType: "mana"
   },
   {
-    id: 'cozy_chair',
-    name: 'Velvet Reading Chair',
-    icon: '🛋️',
-    desc: 'Increase tower coziness',
+    id: "cozy_chair",
+    name: "Velvet Reading Chair",
+    icon: "🛋️",
+    desc: "Increase tower coziness",
     baseCost: 150,
     costMult: 1.7,
-    effect: () => state.cozyScore += 15,
-    costType: 'mana'
+    effect: () => {
+      state.cozyScore += 15;
+    },
+    costType: "mana"
   }
 ];
 
 // Achievements Config
 const achievementsConfig = [
-  { id: 'first_click', name: 'First Spark', icon: '✨', desc: 'Click a candle', check: () => state.totalClicks >= 1 },
-  { id: 'book_worm', name: 'Book Worm', icon: '📖', desc: 'Read 5 books', check: () => state.booksRead >= 5 },
-  { id: 'mana_hoarder', name: 'Mana Hoarder', icon: '💎', desc: 'Collect 1000 mana', check: () => state.mana >= 1000 },
-  { id: 'wisdom_seeker', name: 'Wisdom Seeker', icon: '🧙', desc: 'Reach wisdom level 10', check: () => state.wisdomLevel >= 10 },
-  { id: 'night_owl', name: 'Night Owl', icon: '🦉', desc: 'Use night mode', check: () => state.timeOfDay === 'night' },
-  { id: 'cozy_master', name: 'Cozy Master', icon: '🏡', desc: 'Reach 100 cozy score', check: () => state.cozyScore >= 100 },
-  { id: 'collector', name: 'Scroll Collector', icon: '📜', desc: 'Collect 100 scrolls', check: () => state.scrolls >= 100 },
-  { id: 'clicker', name: 'Enthusiast', icon: '👆', desc: 'Click 100 times', check: () => state.totalClicks >= 100 }
+  {
+    id: "first_click",
+    name: "First Spark",
+    icon: "✨",
+    desc: "Click a candle",
+    check: () => state.totalClicks >= 1
+  },
+  {
+    id: "book_worm",
+    name: "Book Worm",
+    icon: "📖",
+    desc: "Read 5 books",
+    check: () => state.booksRead >= 5
+  },
+  {
+    id: "mana_hoarder",
+    name: "Mana Hoarder",
+    icon: "💎",
+    desc: "Collect 1000 mana",
+    check: () => state.mana >= 1000
+  },
+  {
+    id: "wisdom_seeker",
+    name: "Wisdom Seeker",
+    icon: "🧙",
+    desc: "Reach wisdom level 10",
+    check: () => state.wisdomLevel >= 10
+  },
+  {
+    id: "night_owl",
+    name: "Night Owl",
+    icon: "🦉",
+    desc: "Use night mode",
+    check: () => state.timeOfDay === "night"
+  },
+  {
+    id: "cozy_master",
+    name: "Cozy Master",
+    icon: "🏡",
+    desc: "Reach 100 cozy score",
+    check: () => state.cozyScore >= 100
+  },
+  {
+    id: "collector",
+    name: "Scroll Collector",
+    icon: "📜",
+    desc: "Collect 100 scrolls",
+    check: () => state.scrolls >= 100
+  },
+  {
+    id: "clicker",
+    name: "Enthusiast",
+    icon: "👆",
+    desc: "Click 100 times",
+    check: () => state.totalClicks >= 100
+  }
 ];
 
 // Canvas & Animation
@@ -116,26 +178,26 @@ let candleSfx, bookSfx, windowSfx;
 let uiTick = 0;
 
 // DOM Elements
-const manaAmountEl = document.getElementById('manaAmount');
-const scrollsAmountEl = document.getElementById('scrollsAmount');
-const manaRateEl = document.getElementById('manaRate');
-const wisdomLevelEl = document.getElementById('wisdomLevel');
-const cozyScoreEl = document.getElementById('cozyScore');
-const upgradesListEl = document.getElementById('upgradesList');
-const achievementsListEl = document.getElementById('achievementsList');
-const candleSlider = document.getElementById('candleSlider');
-const candleCountEl = document.getElementById('candleCount');
-const soundToggle = document.getElementById('soundToggle');
-const particlesToggle = document.getElementById('particlesToggle');
-const clickFeedbackEl = document.getElementById('clickFeedback');
-const welcomeCard = document.getElementById('welcomeCard');
-const dismissWelcome = document.getElementById('dismissWelcome');
-const bookModal = document.getElementById('bookModal');
-const closeBookModal = document.getElementById('closeBookModal');
-const bookTextEl = document.getElementById('bookText');
-const resetBtn = document.getElementById('resetBtn');
+const manaAmountEl = document.getElementById("manaAmount");
+const scrollsAmountEl = document.getElementById("scrollsAmount");
+const manaRateEl = document.getElementById("manaRate");
+const wisdomLevelEl = document.getElementById("wisdomLevel");
+const cozyScoreEl = document.getElementById("cozyScore");
+const upgradesListEl = document.getElementById("upgradesList");
+const achievementsListEl = document.getElementById("achievementsList");
+const candleSlider = document.getElementById("candleSlider");
+const candleCountEl = document.getElementById("candleCount");
+const soundToggle = document.getElementById("soundToggle");
+const particlesToggle = document.getElementById("particlesToggle");
+const clickFeedbackEl = document.getElementById("clickFeedback");
+const welcomeCard = document.getElementById("welcomeCard");
+const dismissWelcome = document.getElementById("dismissWelcome");
+const bookModal = document.getElementById("bookModal");
+const closeBookModal = document.getElementById("closeBookModal");
+const bookTextEl = document.getElementById("bookText");
+const resetBtn = document.getElementById("resetBtn");
 
-const overlayUI = document.querySelector('.overlay-ui');
+const overlayUI = document.querySelector(".overlay-ui");
 
 // Wisdom quotes for books
 const wisdomQuotes = [
@@ -168,11 +230,16 @@ const uiThemes = {
   }
 };
 
+// Helper: upgrade level
+function getUpgradeLevel(id) {
+  return (state.upgrades && typeof state.upgrades[id] === "number") ? state.upgrades[id] : 0;
+}
+
 // Initialize
 function init() {
   loadState();
   setupCanvas();
-  setupAudio();        // only SFX now
+  setupAudio(); // only SFX now
   setupEventListeners();
   updateDisplay();
   renderUpgrades();
@@ -180,10 +247,10 @@ function init() {
   updateUIThemeForTime();
 
   // Check if first time
-  if (state.totalClicks === 0) {
-    welcomeCard.classList.remove('hidden');
-  } else {
-    welcomeCard.classList.add('hidden');
+  if (state.totalClicks === 0 && welcomeCard) {
+    welcomeCard.classList.remove("hidden");
+  } else if (welcomeCard) {
+    welcomeCard.classList.add("hidden");
   }
 
   // Start game loop
@@ -194,16 +261,16 @@ function init() {
 // Audio setup (SFX only)
 function setupAudio() {
   try {
-    candleSfx = new Audio('audio/candle_click.wav');
+    candleSfx = new Audio("audio/candle_click.wav");
     candleSfx.volume = 0.6;
 
-    bookSfx = new Audio('audio/book_page.wav');
+    bookSfx = new Audio("audio/book_page.wav");
     bookSfx.volume = 0.6;
 
-    windowSfx = new Audio('audio/window_chime.wav');
+    windowSfx = new Audio("audio/window_chime.wav");
     windowSfx.volume = 0.5;
   } catch (e) {
-    console.warn('Audio init failed:', e);
+    console.warn("Audio init failed:", e);
   }
 }
 
@@ -225,6 +292,22 @@ function loadState() {
       const data = JSON.parse(saved);
       Object.assign(state, data);
 
+      // Make sure new keys exist if user is loading an older save
+      if (!state.upgrades) state.upgrades = {};
+      if (!state.achievements) state.achievements = {};
+
+      upgradesConfig.forEach(up => {
+        if (typeof state.upgrades[up.id] !== "number") {
+          state.upgrades[up.id] = 0;
+        }
+      });
+
+      achievementsConfig.forEach(ach => {
+        if (typeof state.achievements[ach.id] !== "boolean") {
+          state.achievements[ach.id] = false;
+        }
+      });
+
       const now = Date.now();
 
       // 🔮 Offline / idle catch-up
@@ -234,17 +317,35 @@ function loadState() {
           // Optional cap: max 12 hours of offline gains
           const cappedMs = Math.min(elapsedMs, 12 * 60 * 60 * 1000);
           const elapsedSeconds = cappedMs / 1000;
-          const manaGained = state.manaRate * elapsedSeconds;
 
-          state.mana += manaGained;
-          // if you ever add passive scrolls, you can also calculate those here
+          // Base passive mana from manaRate
+          const baseManaGained = state.manaRate * elapsedSeconds;
+
+          // Passive effects from upgrades while offline
+          const carpetLevel = getUpgradeLevel("magic_carpet");
+          const moonLevel = getUpgradeLevel("moon_ritual");
+
+          let scrollGained = 0;
+          if (carpetLevel > 0) {
+            scrollGained += carpetLevel * 0.05 * elapsedSeconds;
+          }
+
+          // Assume half of offline time is "night-ish" if user uses night mode a lot,
+          // but we can bias by their saved timeOfDay
+          let nightFactor = 0.4;
+          if (state.timeOfDay === "night") nightFactor = 0.9;
+          else if (state.timeOfDay === "evening") nightFactor = 0.6;
+          const moonBonus = moonLevel > 0 ? state.manaRate * 0.3 * moonLevel * elapsedSeconds * nightFactor : 0;
+
+          state.mana += baseManaGained + moonBonus;
+          state.scrolls += scrollGained;
         }
       }
 
       state.lastSave = now;
       applySavedSettings();
     } else {
-      // Initialize upgrades & achievements on first run
+      // First run: initialize upgrades & achievements
       upgradesConfig.forEach(up => {
         state.upgrades[up.id] = 0;
       });
@@ -255,7 +356,7 @@ function loadState() {
       state.lastSave = Date.now();
     }
   } catch (e) {
-    console.warn('Failed to load state:', e);
+    console.warn("Failed to load state:", e);
   }
 }
 
@@ -264,18 +365,26 @@ function saveState() {
     state.lastSave = Date.now();
     localStorage.setItem(STATE_KEY, JSON.stringify(state));
   } catch (e) {
-    console.warn('Failed to save state:', e);
+    console.warn("Failed to save state:", e);
   }
 }
 
 function applySavedSettings() {
-  candleSlider.value = state.candleCount;
-  candleCountEl.textContent = state.candleCount;
-  soundToggle.checked = state.soundEnabled;
-  particlesToggle.checked = state.particlesEnabled;
+  if (candleSlider) {
+    candleSlider.value = state.candleCount;
+  }
+  if (candleCountEl) {
+    candleCountEl.textContent = state.candleCount;
+  }
+  if (soundToggle) {
+    soundToggle.checked = state.soundEnabled;
+  }
+  if (particlesToggle) {
+    particlesToggle.checked = state.particlesEnabled;
+  }
 
-  document.querySelectorAll('[data-time]').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.time === state.timeOfDay);
+  document.querySelectorAll("[data-time]").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.time === state.timeOfDay);
   });
 
   updateUIThemeForTime();
@@ -285,6 +394,18 @@ function applySavedSettings() {
 function gameLoop() {
   // Generate mana (manaRate is per second; loop is 10x/sec)
   state.mana += state.manaRate / 10;
+
+  // Passive scroll gain from Magic Carpet
+  const carpetLevel = getUpgradeLevel("magic_carpet");
+  if (carpetLevel > 0) {
+    state.scrolls += carpetLevel * 0.05; // ~0.5 scroll/sec at lv10
+  }
+
+  // Extra night-time mana from Moon Ritual (scales with level & manaRate)
+  const moonLevel = getUpgradeLevel("moon_ritual");
+  if (moonLevel > 0 && state.timeOfDay === "night") {
+    state.mana += (state.manaRate * 0.3 * moonLevel) / 10;
+  }
 
   // Auto-save every 5 seconds
   if (Date.now() - state.lastSave > 5000) {
@@ -296,49 +417,56 @@ function gameLoop() {
 
   // 💡 Refresh upgrades a few times per second so buttons unlock as soon as you can afford them
   uiTick++;
-  if (uiTick % 2 === 0) { // ~5 times per second (interval is 100 ms)
+  if (uiTick % 2 === 0) {
     renderUpgrades();
   }
 }
 
 // Display Updates
 function updateDisplay() {
-  manaAmountEl.textContent = Math.floor(state.mana);
-  scrollsAmountEl.textContent = state.scrolls;
-  manaRateEl.textContent = state.manaRate.toFixed(1) + ' / sec';
-  wisdomLevelEl.textContent = state.wisdomLevel;
-  cozyScoreEl.textContent = state.cozyScore;
+  if (manaAmountEl) manaAmountEl.textContent = Math.floor(state.mana);
+  if (scrollsAmountEl) scrollsAmountEl.textContent = Math.floor(state.scrolls);
+  if (manaRateEl) manaRateEl.textContent = state.manaRate.toFixed(1) + " / sec";
+  if (wisdomLevelEl) wisdomLevelEl.textContent = state.wisdomLevel;
+  if (cozyScoreEl) cozyScoreEl.textContent = state.cozyScore;
 
   updateCozyGlow();
 }
 
 function showClickFeedback(x, y, text) {
+  if (!clickFeedbackEl) return;
   clickFeedbackEl.textContent = text;
-  clickFeedbackEl.style.left = x + 'px';
-  clickFeedbackEl.style.top = y + 'px';
-  clickFeedbackEl.style.opacity = '1';
-  clickFeedbackEl.style.animation = 'none';
+  clickFeedbackEl.style.left = x + "px";
+  clickFeedbackEl.style.top = y + "px";
+  clickFeedbackEl.style.opacity = "1";
+  clickFeedbackEl.style.animation = "none";
 
   setTimeout(() => {
-    clickFeedbackEl.style.animation = 'floatUp 1s ease forwards';
+    clickFeedbackEl.style.animation = "floatUp 1s ease forwards";
   }, 10);
 }
 
 // Upgrades
 function renderUpgrades() {
-  upgradesListEl.innerHTML = '';
+  if (!upgradesListEl) return;
+  upgradesListEl.innerHTML = "";
 
   upgradesConfig.forEach(upgrade => {
     const level = state.upgrades[upgrade.id] || 0;
-    const cost = Math.floor(upgrade.baseCost * Math.pow(upgrade.costMult, level));
-    const canAfford = upgrade.costType === 'mana' ? state.mana >= cost : state.scrolls >= cost;
+    const cost = Math.floor(
+      upgrade.baseCost * Math.pow(upgrade.costMult, level)
+    );
+    const canAfford =
+      upgrade.costType === "mana"
+        ? state.mana >= cost
+        : state.scrolls >= cost;
 
-    const item = document.createElement('div');
-    item.classList.add('upgrade-item');
+    const item = document.createElement("div");
+    item.classList.add("upgrade-item");
     if (!canAfford) {
-      item.classList.add('locked');
+      item.classList.add("locked");
     } else {
-      item.classList.add('affordable'); // for glow styling
+      item.classList.add("affordable"); // for glow styling
     }
 
     item.innerHTML = `
@@ -349,18 +477,21 @@ function renderUpgrades() {
       <div class="upgrade-desc">${upgrade.desc}</div>
       <div class="upgrade-footer">
         <div class="upgrade-cost">
-          ${upgrade.costType === 'mana' ? '✨' : '📜'} ${cost}
+          ${upgrade.costType === "mana" ? "✨" : "📜"} ${cost}
         </div>
-        <button class="upgrade-btn" ${canAfford ? '' : 'disabled'}>
+        <button class="upgrade-btn" ${canAfford ? "" : "disabled"}>
           Upgrade
         </button>
       </div>
     `;
 
-    const btn = item.querySelector('.upgrade-btn');
-    btn.addEventListener('click', (e) => {
+    const btn = item.querySelector(".upgrade-btn");
+    btn.addEventListener("click", e => {
       e.stopPropagation();
-      const affordable = upgrade.costType === 'mana' ? state.mana >= cost : state.scrolls >= cost;
+      const affordable =
+        upgrade.costType === "mana"
+          ? state.mana >= cost
+          : state.scrolls >= cost;
       if (affordable) {
         purchaseUpgrade(upgrade, cost);
       }
@@ -371,7 +502,7 @@ function renderUpgrades() {
 }
 
 function purchaseUpgrade(upgrade, cost) {
-  if (upgrade.costType === 'mana') {
+  if (upgrade.costType === "mana") {
     state.mana -= cost;
   } else {
     state.scrolls -= cost;
@@ -383,7 +514,7 @@ function purchaseUpgrade(upgrade, cost) {
   playSfx(candleSfx);
 
   // Celebration particles from center
-  if (state.particlesEnabled) {
+  if (state.particlesEnabled && canvasWidth && canvasHeight) {
     for (let i = 0; i < 20; i++) {
       particles.push(new Particle(canvasWidth / 2, canvasHeight / 2, true));
     }
@@ -398,7 +529,7 @@ function purchaseUpgrade(upgrade, cost) {
 function checkAchievements() {
   let newUnlock = false;
   const newlyUnlockedIds = [];
-  
+
   achievementsConfig.forEach(ach => {
     if (!state.achievements[ach.id] && ach.check()) {
       state.achievements[ach.id] = true;
@@ -407,7 +538,7 @@ function checkAchievements() {
       state.cozyScore += 5;
     }
   });
-  
+
   if (newUnlock) {
     renderAchievements();
     saveState();
@@ -416,13 +547,15 @@ function checkAchievements() {
 }
 
 function renderAchievements() {
-  achievementsListEl.innerHTML = '';
+  if (!achievementsListEl) return;
+  achievementsListEl.innerHTML = "";
 
   achievementsConfig.forEach(ach => {
     const unlocked = state.achievements[ach.id];
 
-    const item = document.createElement('div');
-    item.className = 'achievement-item' + (unlocked ? ' unlocked' : ' locked');
+    const item = document.createElement("div");
+    item.className =
+      "achievement-item" + (unlocked ? " unlocked" : " locked");
 
     item.dataset.achievementId = ach.id;
 
@@ -442,9 +575,9 @@ function highlightNewAchievements(ids) {
     ids.forEach(id => {
       const el = document.querySelector(`[data-achievement-id="${id}"]`);
       if (!el) return;
-      el.classList.add('just-unlocked');
+      el.classList.add("just-unlocked");
       setTimeout(() => {
-        el.classList.remove('just-unlocked');
+        el.classList.remove("just-unlocked");
       }, 800);
     });
   });
@@ -452,51 +585,71 @@ function highlightNewAchievements(ids) {
 
 function updateCozyGlow() {
   if (!overlayUI) return;
-  overlayUI.classList.remove('cozy-glow-1', 'cozy-glow-2', 'cozy-glow-3');
-  
+  overlayUI.classList.remove("cozy-glow-1", "cozy-glow-2", "cozy-glow-3");
+
   const score = state.cozyScore;
   if (score >= 150) {
-    overlayUI.classList.add('cozy-glow-3');
+    overlayUI.classList.add("cozy-glow-3");
   } else if (score >= 100) {
-    overlayUI.classList.add('cozy-glow-2');
+    overlayUI.classList.add("cozy-glow-2");
   } else if (score >= 70) {
-    overlayUI.classList.add('cozy-glow-1');
+    overlayUI.classList.add("cozy-glow-1");
   }
 }
 
 // Canvas Setup
 function setupCanvas() {
-  canvas = document.getElementById('towerCanvas');
-  ctx = canvas.getContext('2d');
+  canvas = document.getElementById("towerCanvas");
+  if (!canvas) return;
+  ctx = canvas.getContext("2d");
   resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
+  window.addEventListener("resize", () => {
+    resizeCanvas();
+    updateCandles();
+  });
   updateCandles();
 }
 
 function resizeCanvas() {
+  if (!canvas) return;
   canvasWidth = canvas.width = window.innerWidth;
   canvasHeight = canvas.height = window.innerHeight;
-  updateClickableZones();
 }
 
+// Candles now float around the tower in an orbit
 function updateCandles() {
   candleFlames = [];
-  const spacing = Math.min(100, canvasWidth / (state.candleCount + 2));
-  const startX = canvasWidth / 2 - ((state.candleCount - 1) * spacing) / 2;
-  const y = canvasHeight * 0.7;
+  if (!canvasWidth || !canvasHeight) return;
 
-  for (let i = 0; i < state.candleCount; i++) {
+  const centerX = canvasWidth / 2;
+  const baseY = canvasHeight;
+  const towerHeight = canvasHeight * 0.75;
+  const towerWidth = Math.min(350, canvasWidth * 0.45);
+  const midY = baseY - towerHeight * 0.45;
+
+  const radiusX = towerWidth * 0.75;
+  const radiusY = towerHeight * 0.28;
+
+  const count = Math.max(1, state.candleCount);
+
+  for (let i = 0; i < count; i++) {
+    // Spread them mostly around the front & sides (not directly behind)
+    const baseAngle = Math.PI * 0.2 + (i / count) * Math.PI * 1.2;
     candleFlames.push({
-      x: startX + i * spacing,
-      y: y,
-      flicker: Math.random() * Math.PI * 2,
-      speed: 0.05 + Math.random() * 0.05
+      angle: baseAngle,
+      radiusX,
+      radiusY,
+      centerX,
+      centerY: midY,
+      speed: 0.0006 + Math.random() * 0.0008,
+      phase: Math.random() * Math.PI * 2,
+      x: centerX,
+      y: midY
     });
   }
-
-  updateClickableZones();
 }
 
+// Compute clickable zones each frame based on current positions
 function updateClickableZones() {
   // Candle zones - generous for touch
   clickableZones.candles = candleFlames.map(candle => ({
@@ -535,65 +688,85 @@ function updateClickableZones() {
 
 // Event Listeners
 function setupEventListeners() {
-  // Canvas clicks
-  canvas.addEventListener('click', handleCanvasClick);
+  if (canvas) {
+    canvas.addEventListener("click", handleCanvasClick);
+  }
 
   // Dismiss welcome
-  dismissWelcome.addEventListener('click', () => {
-    welcomeCard.classList.add('hidden');
-    state.totalClicks++;
-    saveState();
-  });
+  if (dismissWelcome && welcomeCard) {
+    dismissWelcome.addEventListener("click", () => {
+      welcomeCard.classList.add("hidden");
+      state.totalClicks++;
+      saveState();
+    });
+  }
 
   // Ambiance controls (time of day)
-  document.querySelectorAll('[data-time]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      document.querySelectorAll('[data-time]').forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
+  document.querySelectorAll("[data-time]").forEach(btn => {
+    btn.addEventListener("click", e => {
+      document
+        .querySelectorAll("[data-time]")
+        .forEach(b => b.classList.remove("active"));
+      e.target.classList.add("active");
       state.timeOfDay = e.target.dataset.time;
       updateUIThemeForTime();
       saveState();
     });
   });
 
-  candleSlider.addEventListener('input', (e) => {
-    state.candleCount = parseInt(e.target.value);
-    candleCountEl.textContent = state.candleCount;
-    updateCandles();
-    saveState();
-  });
+  if (candleSlider && candleCountEl) {
+    candleSlider.addEventListener("input", e => {
+      state.candleCount = parseInt(e.target.value, 10);
+      candleCountEl.textContent = state.candleCount;
+      updateCandles();
+      saveState();
+    });
+  }
 
-  soundToggle.addEventListener('change', (e) => {
-    state.soundEnabled = e.target.checked;
-    saveState();
-  });
+  if (soundToggle) {
+    soundToggle.addEventListener("change", e => {
+      state.soundEnabled = e.target.checked;
+      saveState();
+    });
+  }
 
-  particlesToggle.addEventListener('change', (e) => {
-    state.particlesEnabled = e.target.checked;
-    saveState();
-  });
+  if (particlesToggle) {
+    particlesToggle.addEventListener("change", e => {
+      state.particlesEnabled = e.target.checked;
+      saveState();
+    });
+  }
 
   // Book modal
-  closeBookModal.addEventListener('click', () => {
-    bookModal.classList.remove('active');
-  });
+  if (closeBookModal && bookModal) {
+    closeBookModal.addEventListener("click", () => {
+      bookModal.classList.remove("active");
+    });
 
-  bookModal.addEventListener('click', (e) => {
-    if (e.target === bookModal) {
-      bookModal.classList.remove('active');
-    }
-  });
+    bookModal.addEventListener("click", e => {
+      if (e.target === bookModal) {
+        bookModal.classList.remove("active");
+      }
+    });
+  }
 
   // Reset button
-  resetBtn.addEventListener('click', () => {
-    if (confirm('Are you sure you want to reset your tower? This cannot be undone!')) {
-      localStorage.removeItem(STATE_KEY);
-      location.reload();
-    }
-  });
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      if (
+        confirm(
+          "Are you sure you want to reset your tower? This cannot be undone!"
+        )
+      ) {
+        localStorage.removeItem(STATE_KEY);
+        location.reload();
+      }
+    });
+  }
 }
 
 function handleCanvasClick(e) {
+  if (!canvas) return;
   const rect = canvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
@@ -602,23 +775,37 @@ function handleCanvasClick(e) {
 
   // Candle clicks
   clickableZones.candles.forEach((zone, index) => {
-    if (x >= zone.x && x <= zone.x + zone.width &&
-        y >= zone.y && y <= zone.y + zone.height) {
+    if (
+      x >= zone.x &&
+      x <= zone.x + zone.width &&
+      y >= zone.y &&
+      y <= zone.y + zone.height
+    ) {
       handleCandleClick(candleFlames[index], e.clientX, e.clientY);
     }
   });
 
   // Book click
   const bookZone = clickableZones.book;
-  if (bookZone && x >= bookZone.x && x <= bookZone.x + bookZone.width &&
-      y >= bookZone.y && y <= bookZone.y + bookZone.height) {
+  if (
+    bookZone &&
+    x >= bookZone.x &&
+    x <= bookZone.x + bookZone.width &&
+    y >= bookZone.y &&
+    y <= bookZone.y + bookZone.height
+  ) {
     handleBookClick(e.clientX, e.clientY);
   }
 
   // Window click
   const windowZone = clickableZones.window;
-  if (windowZone && x >= windowZone.x && x <= windowZone.x + windowZone.width &&
-      y >= windowZone.y && y <= windowZone.y + windowZone.height) {
+  if (
+    windowZone &&
+    x >= windowZone.x &&
+    x <= windowZone.x + windowZone.width &&
+    y >= windowZone.y &&
+    y <= windowZone.y + windowZone.height
+  ) {
     handleWindowClick(e.clientX, e.clientY);
   }
 
@@ -626,7 +813,12 @@ function handleCanvasClick(e) {
 }
 
 function handleCandleClick(candle, screenX, screenY) {
-  const manaGain = 5 + state.wisdomLevel;
+  // Scale mana gain with wisdom and cozy score so upgrades feel meaningful
+  const base = 5 + state.wisdomLevel;
+  const cozyBoost = 1 + state.cozyScore / 100; // up to +100% at 100 cozy
+  const wisdomBoost = 1 + (state.wisdomLevel - 1) * 0.05; // +5% per wisdom level after 1
+  const manaGain = Math.round(base * cozyBoost * wisdomBoost);
+
   state.mana += manaGain;
 
   playSfx(candleSfx);
@@ -648,12 +840,21 @@ function handleBookClick() {
   state.wisdomLevel++;
   state.scrolls += 10;
 
+  // Every 5 books, a little extra permanent manaRate bonus to feel like progress
+  if (state.booksRead % 5 === 0) {
+    state.manaRate += 0.2;
+    state.cozyScore += 3;
+  }
+
   playSfx(bookSfx);
 
   // Show book modal with random quote
-  const quote = wisdomQuotes[Math.floor(Math.random() * wisdomQuotes.length)];
-  bookTextEl.innerHTML = `<p>"${quote}"</p>`;
-  bookModal.classList.add('active');
+  if (bookTextEl && bookModal) {
+    const quote =
+      wisdomQuotes[Math.floor(Math.random() * wisdomQuotes.length)];
+    bookTextEl.innerHTML = `<p>"${quote}"</p>`;
+    bookModal.classList.add("active");
+  }
 
   // Particles from book
   if (state.particlesEnabled) {
@@ -670,7 +871,14 @@ function handleBookClick() {
 }
 
 function handleWindowClick(screenX, screenY) {
-  const scrollGain = 3;
+  const baseScroll = 3;
+  const moonLevel = getUpgradeLevel("moon_ritual");
+  const timeBonus =
+    state.timeOfDay === "night" || state.timeOfDay === "evening"
+      ? 1 + moonLevel * 0.15
+      : 1;
+  const scrollGain = Math.round(baseScroll * timeBonus);
+
   state.scrolls += scrollGain;
 
   playSfx(windowSfx);
@@ -684,14 +892,16 @@ function handleWindowClick(screenX, screenY) {
     const towerHeight = canvasHeight * 0.75;
     const windowY = baseY - towerHeight * 0.55;
     for (let i = 0; i < 5; i++) {
-      particles.push(new Particle(centerX, windowY + 40, false));
+      particles.push(
+        new Particle(centerX, windowY + 40, false)
+      );
     }
   }
 
   updateDisplay();
 }
 
-// Particle Class (style from Study script)
+// Particle Class
 class Particle {
   constructor(x, y, celebrate = false) {
     this.x = x;
@@ -711,7 +921,7 @@ class Particle {
       this.life = 1;
       this.decay = 0.01;
       this.size = 1 + Math.random() * 2;
-      this.color = 'rgba(255, 200, 100, 0.8)';
+      this.color = "rgba(255, 200, 100, 0.8)";
     }
   }
 
@@ -737,17 +947,17 @@ class Particle {
 function getTimeColors() {
   const colors = {
     evening: {
-      sky: ['#1a0f2e', '#2d1b3d', '#4a2c5e'],
+      sky: ["#1a0f2e", "#2d1b3d", "#4a2c5e"],
       stars: 0.3,
       moon: true
     },
     night: {
-      sky: ['#0a0514', '#150820', '#1f0d2e'],
+      sky: ["#0a0514", "#150820", "#1f0d2e"],
       stars: 0.6,
       moon: true
     },
     dawn: {
-      sky: ['#2d1b3d', '#5e3a5e', '#8b5a7d'],
+      sky: ["#2d1b3d", "#5e3a5e", "#8b5a7d"],
       stars: 0.1,
       moon: false
     }
@@ -758,26 +968,26 @@ function getTimeColors() {
 // UI theme updater for stat cards & subtle header/footer tint
 function updateUIThemeForTime() {
   const theme = uiThemes[state.timeOfDay] || uiThemes.evening;
-  const statCards = document.querySelectorAll('.stat-card');
+  const statCards = document.querySelectorAll(".stat-card");
   statCards.forEach(card => {
     card.style.background = theme.cardBg;
     card.style.borderColor = theme.cardBorder;
     card.style.boxShadow = theme.cardShadow;
   });
 
-  const header = document.querySelector('.app-header');
-  const footer = document.querySelector('.app-footer');
+  const header = document.querySelector(".app-header");
+  const footer = document.querySelector(".app-footer");
   if (header) {
-    header.style.background = 'rgba(10, 5, 20, 0.75)';
-    header.style.backdropFilter = 'blur(14px)';
+    header.style.background = "rgba(10, 5, 20, 0.75)";
+    header.style.backdropFilter = "blur(14px)";
   }
   if (footer) {
-    footer.style.background = 'rgba(10, 5, 20, 0.75)';
-    footer.style.backdropFilter = 'blur(12px)';
+    footer.style.background = "rgba(10, 5, 20, 0.75)";
+    footer.style.backdropFilter = "blur(12px)";
   }
 }
 
-// Drawing functions (modern, from Study script)
+// Drawing functions
 
 function drawBackground() {
   const timeColors = getTimeColors();
@@ -793,7 +1003,7 @@ function drawBackground() {
   for (let i = 0; i < 100; i++) {
     const x = Math.random() * canvasWidth;
     const y = Math.random() * canvasHeight;
-    ctx.fillStyle = Math.random() > 0.5 ? '#ffffff' : '#000000';
+    ctx.fillStyle = Math.random() > 0.5 ? "#ffffff" : "#000000";
     ctx.fillRect(x, y, 1, 1);
   }
   ctx.globalAlpha = 1;
@@ -814,15 +1024,15 @@ function drawStars() {
       ctx.globalAlpha = twinkle * timeColors.stars * 0.8;
 
       const starGlow = ctx.createRadialGradient(x, y, 0, x, y, size * 3);
-      starGlow.addColorStop(0, 'rgba(255, 255, 255, 1)');
-      starGlow.addColorStop(0.3, 'rgba(255, 255, 255, 0.6)');
-      starGlow.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      starGlow.addColorStop(0, "rgba(255, 255, 255, 1)");
+      starGlow.addColorStop(0.3, "rgba(255, 255, 255, 0.6)");
+      starGlow.addColorStop(1, "rgba(255, 255, 255, 0)");
       ctx.fillStyle = starGlow;
       ctx.beginPath();
       ctx.arc(x, y, size * 3, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = "#ffffff";
       ctx.beginPath();
       ctx.arc(x, y, size, 0, Math.PI * 2);
       ctx.fill();
@@ -839,31 +1049,57 @@ function drawMoon() {
     const y = canvasHeight * 0.18;
     const radius = Math.min(60, canvasWidth * 0.08);
 
-    const outerGlow = ctx.createRadialGradient(x, y, radius * 0.8, x, y, radius * 3);
-    outerGlow.addColorStop(0, 'rgba(255, 250, 230, 0.15)');
-    outerGlow.addColorStop(0.5, 'rgba(255, 250, 230, 0.05)');
-    outerGlow.addColorStop(1, 'rgba(255, 250, 230, 0)');
+    const outerGlow = ctx.createRadialGradient(
+      x,
+      y,
+      radius * 0.8,
+      x,
+      y,
+      radius * 3
+    );
+    outerGlow.addColorStop(0, "rgba(255, 250, 230, 0.15)");
+    outerGlow.addColorStop(0.5, "rgba(255, 250, 230, 0.05)");
+    outerGlow.addColorStop(1, "rgba(255, 250, 230, 0)");
     ctx.fillStyle = outerGlow;
     ctx.beginPath();
     ctx.arc(x, y, radius * 3, 0, Math.PI * 2);
     ctx.fill();
 
-    const moonGradient = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.3, 0, x, y, radius);
-    moonGradient.addColorStop(0, '#fffdf5');
-    moonGradient.addColorStop(0.7, '#fdf8e8');
-    moonGradient.addColorStop(1, '#e8e0c8');
+    const moonGradient = ctx.createRadialGradient(
+      x - radius * 0.3,
+      y - radius * 0.3,
+      0,
+      x,
+      y,
+      radius
+    );
+    moonGradient.addColorStop(0, "#fffdf5");
+    moonGradient.addColorStop(0.7, "#fdf8e8");
+    moonGradient.addColorStop(1, "#e8e0c8");
     ctx.fillStyle = moonGradient;
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.globalAlpha = 0.1;
-    ctx.fillStyle = '#c8c0a8';
+    ctx.fillStyle = "#c8c0a8";
     ctx.beginPath();
-    ctx.arc(x - radius * 0.3, y - radius * 0.2, radius * 0.2, 0, Math.PI * 2);
+    ctx.arc(
+      x - radius * 0.3,
+      y - radius * 0.2,
+      radius * 0.2,
+      0,
+      Math.PI * 2
+    );
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(x + radius * 0.25, y + radius * 0.15, radius * 0.15, 0, Math.PI * 2);
+    ctx.arc(
+      x + radius * 0.25,
+      y + radius * 0.15,
+      radius * 0.15,
+      0,
+      Math.PI * 2
+    );
     ctx.fill();
     ctx.globalAlpha = 1;
   }
@@ -878,20 +1114,25 @@ function drawTower() {
   // Tower shadow
   ctx.save();
   ctx.globalAlpha = 0.3;
-  ctx.fillStyle = '#000000';
-  ctx.filter = 'blur(30px)';
+  ctx.fillStyle = "#000000";
+  ctx.filter = "blur(30px)";
   ctx.beginPath();
   ctx.ellipse(centerX, baseY - 20, towerWidth * 0.6, 40, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
   // Tower body
-  const towerGradient = ctx.createLinearGradient(centerX - towerWidth / 2, 0, centerX + towerWidth / 2, 0);
-  towerGradient.addColorStop(0, '#1a1210');
-  towerGradient.addColorStop(0.3, '#2a1f18');
-  towerGradient.addColorStop(0.5, '#352820');
-  towerGradient.addColorStop(0.7, '#2a1f18');
-  towerGradient.addColorStop(1, '#1a1210');
+  const towerGradient = ctx.createLinearGradient(
+    centerX - towerWidth / 2,
+    0,
+    centerX + towerWidth / 2,
+    0
+  );
+  towerGradient.addColorStop(0, "#1a1210");
+  towerGradient.addColorStop(0.3, "#2a1f18");
+  towerGradient.addColorStop(0.5, "#352820");
+  towerGradient.addColorStop(0.7, "#2a1f18");
+  towerGradient.addColorStop(1, "#1a1210");
 
   ctx.fillStyle = towerGradient;
   ctx.beginPath();
@@ -903,12 +1144,14 @@ function drawTower() {
   ctx.fill();
 
   // Texture lines
-  ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.15)";
   ctx.lineWidth = 1;
   for (let i = 0; i < 20; i++) {
-    const y = baseY - (i * towerHeight / 20);
-    const leftX = centerX - towerWidth / 2.2 + (i * towerWidth / 60);
-    const rightX = centerX + towerWidth / 2.2 - (i * towerWidth / 60);
+    const y = baseY - (i * towerHeight) / 20;
+    const leftX =
+      centerX - towerWidth / 2.2 + (i * towerWidth) / 60;
+    const rightX =
+      centerX + towerWidth / 2.2 - (i * towerWidth) / 60;
     ctx.beginPath();
     ctx.moveTo(leftX, y);
     ctx.lineTo(rightX, y);
@@ -916,9 +1159,14 @@ function drawTower() {
   }
 
   // Roof
-  const roofGradient = ctx.createLinearGradient(0, baseY - towerHeight - 80, 0, baseY - towerHeight);
-  roofGradient.addColorStop(0, '#1a0f0a');
-  roofGradient.addColorStop(1, '#0d0805');
+  const roofGradient = ctx.createLinearGradient(
+    0,
+    baseY - towerHeight - 80,
+    0,
+    baseY - towerHeight
+  );
+  roofGradient.addColorStop(0, "#1a0f0a");
+  roofGradient.addColorStop(1, "#0d0805");
   ctx.fillStyle = roofGradient;
   ctx.beginPath();
   ctx.moveTo(centerX - towerWidth / 2.8, baseY - towerHeight);
@@ -928,7 +1176,7 @@ function drawTower() {
   ctx.fill();
 
   // Roof edge
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(centerX - towerWidth / 2.8, baseY - towerHeight);
@@ -946,59 +1194,100 @@ function drawWindow() {
 
   // Glow
   const glowSize = windowWidth * 2;
-  const windowGlow = ctx.createRadialGradient(centerX, windowY + windowHeight / 2, 0, centerX, windowY + windowHeight / 2, glowSize);
-  windowGlow.addColorStop(0, 'rgba(255, 190, 100, 0.4)');
-  windowGlow.addColorStop(0.4, 'rgba(255, 160, 80, 0.15)');
-  windowGlow.addColorStop(1, 'rgba(255, 140, 60, 0)');
+  const windowGlow = ctx.createRadialGradient(
+    centerX,
+    windowY + windowHeight / 2,
+    0,
+    centerX,
+    windowY + windowHeight / 2,
+    glowSize
+  );
+  windowGlow.addColorStop(0, "rgba(255, 190, 100, 0.4)");
+  windowGlow.addColorStop(0.4, "rgba(255, 160, 80, 0.15)");
+  windowGlow.addColorStop(1, "rgba(255, 140, 60, 0)");
   ctx.fillStyle = windowGlow;
   ctx.beginPath();
   ctx.arc(centerX, windowY + windowHeight / 2, glowSize, 0, Math.PI * 2);
   ctx.fill();
 
   // Frame outer
-  ctx.fillStyle = '#4a3525';
+  ctx.fillStyle = "#4a3525";
   ctx.beginPath();
-  ctx.roundRect(centerX - windowWidth / 2, windowY, windowWidth, windowHeight, [windowWidth / 2, windowWidth / 2, 8, 8]);
+  ctx.roundRect(
+    centerX - windowWidth / 2,
+    windowY,
+    windowWidth,
+    windowHeight,
+    [windowWidth / 2, windowWidth / 2, 8, 8]
+  );
   ctx.fill();
 
   // Frame inner
-  ctx.fillStyle = '#5d4435';
+  ctx.fillStyle = "#5d4435";
   ctx.beginPath();
-  ctx.roundRect(centerX - windowWidth / 2 + 6, windowY + 6, windowWidth - 12, windowHeight - 12, [windowWidth / 2, windowWidth / 2, 4, 4]);
+  ctx.roundRect(
+    centerX - windowWidth / 2 + 6,
+    windowY + 6,
+    windowWidth - 12,
+    windowHeight - 12,
+    [windowWidth / 2, windowWidth / 2, 4, 4]
+  );
   ctx.fill();
 
   // Light / glass
   const lightGradient = ctx.createRadialGradient(
-    centerX, windowY + windowHeight / 3, 0,
-    centerX, windowY + windowHeight / 2, windowWidth / 2
+    centerX,
+    windowY + windowHeight / 3,
+    0,
+    centerX,
+    windowY + windowHeight / 2,
+    windowWidth / 2
   );
-  lightGradient.addColorStop(0, '#ffe5b8');
-  lightGradient.addColorStop(0.5, '#ffb870');
-  lightGradient.addColorStop(1, '#ff9850');
+  lightGradient.addColorStop(0, "#ffe5b8");
+  lightGradient.addColorStop(0.5, "#ffb870");
+  lightGradient.addColorStop(1, "#ff9850");
   ctx.fillStyle = lightGradient;
   ctx.beginPath();
-  ctx.roundRect(centerX - windowWidth / 2 + 10, windowY + 10, windowWidth - 20, windowHeight - 20, [windowWidth / 2, windowWidth / 2, 4, 4]);
+  ctx.roundRect(
+    centerX - windowWidth / 2 + 10,
+    windowY + 10,
+    windowWidth - 20,
+    windowHeight - 20,
+    [windowWidth / 2, windowWidth / 2, 4, 4]
+  );
   ctx.fill();
 
   // Divider
-  ctx.strokeStyle = 'rgba(74, 53, 37, 0.8)';
+  ctx.strokeStyle = "rgba(74, 53, 37, 0.8)";
   ctx.lineWidth = 4;
-  ctx.lineCap = 'round';
+  ctx.lineCap = "round";
   ctx.beginPath();
   ctx.moveTo(centerX, windowY + 10);
   ctx.lineTo(centerX, windowY + windowHeight - 10);
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(centerX - windowWidth / 2 + 10, windowY + windowHeight / 2);
-  ctx.lineTo(centerX + windowWidth / 2 - 10, windowY + windowHeight / 2);
+  ctx.moveTo(
+    centerX - windowWidth / 2 + 10,
+    windowY + windowHeight / 2
+  );
+  ctx.lineTo(
+    centerX + windowWidth / 2 - 10,
+    windowY + windowHeight / 2
+  );
   ctx.stroke();
 
   // Reflection
   ctx.save();
   ctx.globalAlpha = 0.2;
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = "#ffffff";
   ctx.beginPath();
-  ctx.arc(centerX - windowWidth / 4, windowY + windowHeight / 4, windowWidth / 6, 0, Math.PI * 2);
+  ctx.arc(
+    centerX - windowWidth / 4,
+    windowY + windowHeight / 4,
+    windowWidth / 6,
+    0,
+    Math.PI * 2
+  );
   ctx.fill();
   ctx.restore();
 }
@@ -1010,23 +1299,35 @@ function drawStudyRoom() {
 
   // Desk
   const deskGradient = ctx.createLinearGradient(0, roomY, 0, roomY + 60);
-  deskGradient.addColorStop(0, '#6b4a32');
-  deskGradient.addColorStop(0.3, '#5d3f2a');
-  deskGradient.addColorStop(1, '#3d2818');
+  deskGradient.addColorStop(0, "#6b4a32");
+  deskGradient.addColorStop(0.3, "#5d3f2a");
+  deskGradient.addColorStop(1, "#3d2818");
 
   ctx.fillStyle = deskGradient;
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+  ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
   ctx.shadowBlur = 20;
   ctx.shadowOffsetY = 10;
   ctx.beginPath();
-  ctx.roundRect(centerX - deskWidth / 2, roomY, deskWidth, 60, 8);
+  ctx.roundRect(
+    centerX - deskWidth / 2,
+    roomY,
+    deskWidth,
+    60,
+    8
+  );
   ctx.fill();
-  ctx.shadowColor = 'transparent';
+  ctx.shadowColor = "transparent";
 
   // Desk top highlight
-  ctx.fillStyle = 'rgba(139, 106, 79, 0.3)';
+  ctx.fillStyle = "rgba(139, 106, 79, 0.3)";
   ctx.beginPath();
-  ctx.roundRect(centerX - deskWidth / 2, roomY, deskWidth, 8, [8, 8, 0, 0]);
+  ctx.roundRect(
+    centerX - deskWidth / 2,
+    roomY,
+    deskWidth,
+    8,
+    [8, 8, 0, 0]
+  );
   ctx.fill();
 
   // Book
@@ -1036,32 +1337,46 @@ function drawStudyRoom() {
   // Shadow under book
   ctx.save();
   ctx.globalAlpha = 0.2 - bookFloat * 0.02;
-  ctx.fillStyle = '#000000';
-  ctx.filter = 'blur(8px)';
+  ctx.fillStyle = "#000000";
+  ctx.filter = "blur(8px)";
   ctx.beginPath();
-  ctx.ellipse(centerX - 40, roomY + 40, 45, 8, 0, 0, Math.PI * 2);
+  ctx.ellipse(
+    centerX - 40,
+    roomY + 40,
+    45,
+    8,
+    0,
+    0,
+    Math.PI * 2
+  );
   ctx.fill();
   ctx.restore();
 
   // Left page
-  ctx.fillStyle = '#f9f3e8';
+  ctx.fillStyle = "#f9f3e8";
   ctx.beginPath();
-  ctx.roundRect(centerX - 85, bookY - 10, 80, 60, [4, 0, 0, 4]);
+  ctx.roundRect(
+    centerX - 85,
+    bookY - 10,
+    80,
+    60,
+    [4, 0, 0, 4]
+  );
   ctx.fill();
-  ctx.strokeStyle = 'rgba(139, 106, 79, 0.2)';
+  ctx.strokeStyle = "rgba(139, 106, 79, 0.2)";
   ctx.lineWidth = 1;
   ctx.strokeRect(centerX - 85, bookY - 10, 80, 60);
 
   // Right page
-  ctx.fillStyle = '#f5ead8';
+  ctx.fillStyle = "#f5ead8";
   ctx.beginPath();
   ctx.roundRect(centerX + 5, bookY - 10, 80, 60, [0, 4, 4, 0]);
   ctx.fill();
-  ctx.strokeStyle = 'rgba(139, 106, 79, 0.2)';
+  ctx.strokeStyle = "rgba(139, 106, 79, 0.2)";
   ctx.strokeRect(centerX + 5, bookY - 10, 80, 60);
 
   // Text lines
-  ctx.strokeStyle = 'rgba(100, 80, 60, 0.3)';
+  ctx.strokeStyle = "rgba(100, 80, 60, 0.3)";
   ctx.lineWidth = 1;
   for (let i = 0; i < 6; i++) {
     ctx.beginPath();
@@ -1076,9 +1391,16 @@ function drawStudyRoom() {
   }
 
   // Book glow
-  const bookGlow = ctx.createRadialGradient(centerX - 40, bookY + 20, 0, centerX - 40, bookY + 20, 80);
-  bookGlow.addColorStop(0, 'rgba(200, 160, 255, 0.15)');
-  bookGlow.addColorStop(1, 'rgba(200, 160, 255, 0)');
+  const bookGlow = ctx.createRadialGradient(
+    centerX - 40,
+    bookY + 20,
+    0,
+    centerX - 40,
+    bookY + 20,
+    80
+  );
+  bookGlow.addColorStop(0, "rgba(200, 160, 255, 0.15)");
+  bookGlow.addColorStop(1, "rgba(200, 160, 255, 0)");
   ctx.fillStyle = bookGlow;
   ctx.beginPath();
   ctx.arc(centerX - 40, bookY + 20, 80, 0, Math.PI * 2);
@@ -1088,19 +1410,25 @@ function drawStudyRoom() {
   const inkX = centerX + 90;
   const inkY = roomY + 25;
 
-  ctx.fillStyle = '#1a0f2e';
+  ctx.fillStyle = "#1a0f2e";
   ctx.beginPath();
   ctx.roundRect(inkX, inkY, 24, 30, [2, 2, 6, 6]);
   ctx.fill();
 
-  ctx.fillStyle = '#2d1850';
+  ctx.fillStyle = "#2d1850";
   ctx.beginPath();
-  ctx.roundRect(inkX + 6, inkY - 6, 12, 8, [3, 3, 0, 0]);
+  ctx.roundRect(
+    inkX + 6,
+    inkY - 6,
+    12,
+    8,
+    [3, 3, 0, 0]
+  );
   ctx.fill();
 
   ctx.save();
   ctx.globalAlpha = 0.3;
-  ctx.fillStyle = '#7b5adc';
+  ctx.fillStyle = "#7b5adc";
   ctx.beginPath();
   ctx.arc(inkX + 8, inkY + 10, 6, 0, Math.PI * 2);
   ctx.fill();
@@ -1108,15 +1436,15 @@ function drawStudyRoom() {
 
   // Quill
   ctx.save();
-  ctx.strokeStyle = '#d4a574';
+  ctx.strokeStyle = "#d4a574";
   ctx.lineWidth = 3;
-  ctx.lineCap = 'round';
+  ctx.lineCap = "round";
   ctx.beginPath();
   ctx.moveTo(inkX + 30, inkY + 20);
   ctx.quadraticCurveTo(inkX + 45, inkY + 10, inkX + 55, inkY);
   ctx.stroke();
 
-  ctx.fillStyle = '#8b7355';
+  ctx.fillStyle = "#8b7355";
   ctx.beginPath();
   ctx.moveTo(inkX + 55, inkY);
   ctx.lineTo(inkX + 50, inkY + 6);
@@ -1124,7 +1452,7 @@ function drawStudyRoom() {
   ctx.closePath();
   ctx.fill();
 
-  ctx.strokeStyle = 'rgba(212, 165, 116, 0.5)';
+  ctx.strokeStyle = "rgba(212, 165, 116, 0.5)";
   ctx.lineWidth = 1;
   for (let i = 0; i < 5; i++) {
     const t = i / 5;
@@ -1139,62 +1467,136 @@ function drawStudyRoom() {
 }
 
 function drawCandles() {
+  if (!candleFlames.length) return;
+
   candleFlames.forEach((candle, index) => {
+    const orbitAngle =
+      candle.angle + time * candle.speed + candle.phase;
+
+    const x =
+      candle.centerX + Math.cos(orbitAngle) * candle.radiusX;
+    const y =
+      candle.centerY + Math.sin(orbitAngle) * candle.radiusY;
+
+    candle.x = x;
+    candle.y = y;
+
     const flicker = Math.sin(time * 0.003 + index * 2) * 2;
 
     // Glow
     const glowSize = 60 + flicker * 5;
-    const candleGlow = ctx.createRadialGradient(candle.x, candle.y - 15, 0, candle.x, candle.y - 15, glowSize);
-    candleGlow.addColorStop(0, 'rgba(255, 200, 100, 0.4)');
-    candleGlow.addColorStop(0.5, 'rgba(255, 160, 80, 0.15)');
-    candleGlow.addColorStop(1, 'rgba(255, 140, 60, 0)');
+    const candleGlow = ctx.createRadialGradient(
+      candle.x,
+      candle.y - 15,
+      0,
+      candle.x,
+      candle.y - 15,
+      glowSize
+    );
+    candleGlow.addColorStop(0, "rgba(255, 200, 100, 0.4)");
+    candleGlow.addColorStop(0.5, "rgba(255, 160, 80, 0.15)");
+    candleGlow.addColorStop(1, "rgba(255, 140, 60, 0)");
     ctx.fillStyle = candleGlow;
     ctx.beginPath();
-    ctx.arc(candle.x, candle.y - 15, glowSize, 0, Math.PI * 2);
+    ctx.arc(
+      candle.x,
+      candle.y - 15,
+      glowSize,
+      0,
+      Math.PI * 2
+    );
     ctx.fill();
 
     // Body
-    const candleGradient = ctx.createLinearGradient(candle.x - 10, 0, candle.x + 10, 0);
-    candleGradient.addColorStop(0, '#e8ddc4');
-    candleGradient.addColorStop(0.5, '#f4f0e7');
-    candleGradient.addColorStop(1, '#d0c2a4');
+    const candleGradient = ctx.createLinearGradient(
+      candle.x - 10,
+      0,
+      candle.x + 10,
+      0
+    );
+    candleGradient.addColorStop(0, "#e8ddc4");
+    candleGradient.addColorStop(0.5, "#f4f0e7");
+    candleGradient.addColorStop(1, "#d0c2a4");
     ctx.fillStyle = candleGradient;
     ctx.beginPath();
-    ctx.roundRect(candle.x - 10, candle.y, 20, 50, [2, 2, 4, 4]);
+    ctx.roundRect(
+      candle.x - 10,
+      candle.y,
+      20,
+      50,
+      [2, 2, 4, 4]
+    );
     ctx.fill();
 
     // Wax drip
-    ctx.fillStyle = 'rgba(232, 221, 196, 0.8)';
+    ctx.fillStyle = "rgba(232, 221, 196, 0.8)";
     ctx.beginPath();
-    ctx.ellipse(candle.x - 5, candle.y + 10, 3, 8, 0.3, 0, Math.PI * 2);
+    ctx.ellipse(
+      candle.x - 5,
+      candle.y + 10,
+      3,
+      8,
+      0.3,
+      0,
+      Math.PI * 2
+    );
     ctx.fill();
 
     // Flame
     const flameHeight = 20 + flicker;
     const flameY = candle.y - flameHeight;
 
-    const flameGradient = ctx.createRadialGradient(candle.x, flameY + 10, 0, candle.x, flameY + 5, 12);
-    flameGradient.addColorStop(0, '#fffdf5');
-    flameGradient.addColorStop(0.3, '#ffe5b8');
-    flameGradient.addColorStop(0.6, '#ffb870');
-    flameGradient.addColorStop(1, 'rgba(255, 107, 53, 0)');
+    const flameGradient = ctx.createRadialGradient(
+      candle.x,
+      flameY + 10,
+      0,
+      candle.x,
+      flameY + 5,
+      12
+    );
+    flameGradient.addColorStop(0, "#fffdf5");
+    flameGradient.addColorStop(0.3, "#ffe5b8");
+    flameGradient.addColorStop(0.6, "#ffb870");
+    flameGradient.addColorStop(1, "rgba(255, 107, 53, 0)");
 
     ctx.fillStyle = flameGradient;
     ctx.beginPath();
-    ctx.ellipse(candle.x, flameY + 10, 8, flameHeight / 2, 0, 0, Math.PI * 2);
+    ctx.ellipse(
+      candle.x,
+      flameY + 10,
+      8,
+      flameHeight / 2,
+      0,
+      0,
+      Math.PI * 2
+    );
     ctx.fill();
 
     // Core
-    ctx.fillStyle = '#ffffff';
-    ctx.globalAlpha = 0.8 + Math.sin(time * 0.005 + index) * 0.2;
+    ctx.fillStyle = "#ffffff";
+    ctx.globalAlpha =
+      0.8 + Math.sin(time * 0.005 + index) * 0.2;
     ctx.beginPath();
-    ctx.ellipse(candle.x, flameY + 12, 4, 6, 0, 0, Math.PI * 2);
+    ctx.ellipse(
+      candle.x,
+      flameY + 12,
+      4,
+      6,
+      0,
+      0,
+      Math.PI * 2
+    );
     ctx.fill();
     ctx.globalAlpha = 1;
 
     // Smoke particles
     if (state.particlesEnabled && Math.random() < 0.15) {
-      particles.push(new Particle(candle.x + (Math.random() - 0.5) * 6, flameY));
+      particles.push(
+        new Particle(
+          candle.x + (Math.random() - 0.5) * 6,
+          flameY
+        )
+      );
     }
   });
 }
@@ -1210,8 +1612,15 @@ function drawVignette() {
 
   // Dark edges
   ctx.save();
-  ctx.globalCompositeOperation = 'multiply';
-  const darkGrad = ctx.createRadialGradient(centerX, centerY, radius * 0.25, centerX, centerY, radius);
+  ctx.globalCompositeOperation = "multiply";
+  const darkGrad = ctx.createRadialGradient(
+    centerX,
+    centerY,
+    radius * 0.25,
+    centerX,
+    centerY,
+    radius
+  );
   darkGrad.addColorStop(0, `rgba(0, 0, 0, ${0.2 * (1 - t)})`);
   darkGrad.addColorStop(1, `rgba(0, 0, 0, ${0.75 + 0.1 * t})`);
   ctx.fillStyle = darkGrad;
@@ -1221,9 +1630,22 @@ function drawVignette() {
   // Warm inner glow (stronger with cozyScore)
   ctx.save();
   ctx.globalAlpha = 0.25 * t;
-  const warmGrad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius * 0.6);
-  warmGrad.addColorStop(0, 'rgba(255, 200, 150, 0.7)');
-  warmGrad.addColorStop(1, 'rgba(255, 200, 150, 0)');
+  const warmGrad = ctx.createRadialGradient(
+    centerX,
+    centerY,
+    0,
+    centerX,
+    centerY,
+    radius * 0.6
+  );
+  warmGrad.addColorStop(
+    0,
+    "rgba(255, 200, 150, 0.7)"
+  );
+  warmGrad.addColorStop(
+    1,
+    "rgba(255, 200, 150, 0)"
+  );
   ctx.fillStyle = warmGrad;
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
   ctx.restore();
@@ -1242,8 +1664,17 @@ function drawParticles() {
     ctx.save();
     ctx.globalAlpha = p.life * 0.8;
 
-    const particleGlow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2);
-    const outerColor = p.color.includes('0.8') ? p.color.replace('0.8', '0') : p.color;
+    const particleGlow = ctx.createRadialGradient(
+      p.x,
+      p.y,
+      0,
+      p.x,
+      p.y,
+      p.size * 2
+    );
+    const outerColor = p.color.includes("0.8")
+      ? p.color.replace("0.8", "0")
+      : p.color;
     particleGlow.addColorStop(0, p.color);
     particleGlow.addColorStop(1, outerColor);
     ctx.fillStyle = particleGlow;
@@ -1251,7 +1682,7 @@ function drawParticles() {
     ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = p.celebrate ? p.color : '#fffdf5';
+    ctx.fillStyle = p.celebrate ? p.color : "#fffdf5";
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
     ctx.fill();
@@ -1260,16 +1691,18 @@ function drawParticles() {
   });
 }
 
-window.addEventListener('beforeunload', () => {
+window.addEventListener("beforeunload", () => {
   try {
     saveState();
   } catch (e) {
-    console.warn('Failed to save on unload:', e);
+    console.warn("Failed to save on unload:", e);
   }
 });
 
 // Animation loop
 function animate() {
+  if (!ctx) return;
+
   time++;
 
   drawBackground();
@@ -1282,22 +1715,25 @@ function animate() {
   drawVignette();
   drawParticles();
 
+  // Keep clickable zones aligned with moving candles & static elements
+  updateClickableZones();
+
   requestAnimationFrame(animate);
 }
 
 // Initialize
-window.addEventListener('load', init);
+window.addEventListener("load", init);
 
 // 🔧 Register service worker for offline support
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register('./service-worker.js')
+      .register("./service-worker.js")
       .then(reg => {
-        console.log('ServiceWorker registered:', reg.scope);
+        console.log("ServiceWorker registered:", reg.scope);
       })
       .catch(err => {
-        console.log('ServiceWorker registration failed:', err);
+        console.log("ServiceWorker registration failed:", err);
       });
   });
 }
