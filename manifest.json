@@ -7,7 +7,7 @@
   "theme_color": "#3d2817",
   "icons": [
     {
-      "src": "icon-512.png",
+      "src": "CozyWizard.PNG",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
