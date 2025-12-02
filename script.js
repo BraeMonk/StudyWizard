@@ -113,6 +113,8 @@ let clickableZones = {
 // Audio (SFX only, no ambience)
 let candleSfx, bookSfx, windowSfx;
 
+let uiTick = 0;
+
 // DOM Elements
 const manaAmountEl = document.getElementById('manaAmount');
 const scrollsAmountEl = document.getElementById('scrollsAmount');
@@ -223,27 +225,34 @@ function loadState() {
       const data = JSON.parse(saved);
       Object.assign(state, data);
 
-      // ensure new keys exist
-      upgradesConfig.forEach(up => {
-        if (typeof state.upgrades[up.id] !== 'number') {
-          state.upgrades[up.id] = 0;
-        }
-      });
-      achievementsConfig.forEach(ach => {
-        if (typeof state.achievements[ach.id] !== 'boolean') {
-          state.achievements[ach.id] = false;
-        }
-      });
+      const now = Date.now();
 
+      // 🔮 Offline / idle catch-up
+      if (state.lastSave) {
+        const elapsedMs = now - state.lastSave;
+        if (elapsedMs > 0) {
+          // Optional cap: max 12 hours of offline gains
+          const cappedMs = Math.min(elapsedMs, 12 * 60 * 60 * 1000);
+          const elapsedSeconds = cappedMs / 1000;
+          const manaGained = state.manaRate * elapsedSeconds;
+
+          state.mana += manaGained;
+          // if you ever add passive scrolls, you can also calculate those here
+        }
+      }
+
+      state.lastSave = now;
       applySavedSettings();
     } else {
-      // Initialize upgrades/achievements
+      // Initialize upgrades & achievements on first run
       upgradesConfig.forEach(up => {
         state.upgrades[up.id] = 0;
       });
       achievementsConfig.forEach(ach => {
         state.achievements[ach.id] = false;
       });
+
+      state.lastSave = Date.now();
     }
   } catch (e) {
     console.warn('Failed to load state:', e);
@@ -274,7 +283,7 @@ function applySavedSettings() {
 
 // Game Loop
 function gameLoop() {
-  // Generate mana
+  // Generate mana (manaRate is per second; loop is 10x/sec)
   state.mana += state.manaRate / 10;
 
   // Auto-save every 5 seconds
@@ -284,6 +293,12 @@ function gameLoop() {
 
   updateDisplay();
   checkAchievements();
+
+  // 💡 Refresh upgrades a few times per second so buttons unlock as soon as you can afford them
+  uiTick++;
+  if (uiTick % 2 === 0) { // ~5 times per second (interval is 100 ms)
+    renderUpgrades();
+  }
 }
 
 // Display Updates
@@ -1245,6 +1260,14 @@ function drawParticles() {
   });
 }
 
+window.addEventListener('beforeunload', () => {
+  try {
+    saveState();
+  } catch (e) {
+    console.warn('Failed to save on unload:', e);
+  }
+});
+
 // Animation loop
 function animate() {
   time++;
@@ -1264,3 +1287,17 @@ function animate() {
 
 // Initialize
 window.addEventListener('load', init);
+
+// 🔧 Register service worker for offline support
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('./service-worker.js')
+      .then(reg => {
+        console.log('ServiceWorker registered:', reg.scope);
+      })
+      .catch(err => {
+        console.log('ServiceWorker registration failed:', err);
+      });
+  });
+}
