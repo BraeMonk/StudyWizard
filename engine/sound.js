@@ -1,1 +1,0 @@
-const Sound={play(name){}};

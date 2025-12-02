@@ -1,1 +1,0 @@
-const Rooms={current:null,layers:[],load(name){this.current=name;this.layers=[];['bg','mid','fg'].forEach(layer=>{const img=new Image();img.src=`assets/rooms/${name}_${layer}.svg`;this.layers.push({img,parallax:layer==='bg'?0.2:layer==='mid'?0.5:1});});},render(ctx){this.layers.forEach(layer=>{if(layer.img.complete){ctx.drawImage(layer.img,0,0,canvas.width,canvas.height);}});}};

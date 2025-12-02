@@ -1,1 +1,0 @@
-const Familiars={list:[],spawn(name){const img=new Image();img.src=`assets/familiars/${name}.svg`;this.list.push({img,x:100,y:200,offset:0});},render(ctx,dt){this.list.forEach(f=>{f.offset+=dt;const bob=Math.sin(f.offset*2)*5;if(f.img.complete){ctx.drawImage(f.img,f.x,f.y+bob,80,80);}});}};

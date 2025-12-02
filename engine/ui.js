@@ -1,1 +1,0 @@
-const UI={init(){},render(ctx){ctx.fillStyle='#000';ctx.font='20px Georgia';ctx.fillText(`Ink: ${Game.state.ink}`,20,30);ctx.fillText(`Wisdom: ${Game.state.wisdom}`,20,60);}};

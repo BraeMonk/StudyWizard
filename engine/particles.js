@@ -1,1 +1,0 @@
-const Particles={list:[],spawn(x,y,color){this.list.push({x,y,vx:(Math.random()-0.5)*20,vy:-30,life:1,color});},render(ctx,dt){this.list=this.list.filter(p=>p.life>0);this.list.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt*0.5;ctx.globalAlpha=Math.max(p.life,0);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;});}};
